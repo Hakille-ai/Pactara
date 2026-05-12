@@ -1,0 +1,12 @@
+.env
+.env.local
+target/
+node_modules/
+.next/
+dist/
+coverage/
+*.log
+*.sqlite
+*.db
+/.sqlx/
+
