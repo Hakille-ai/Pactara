@@ -1,6 +1,6 @@
-import { OmniaDashboard } from "@/components/omnia-dashboard";
+import { PactaraDashboard } from "@/components/pactara-dashboard";
 
 export default function Home() {
-  return <OmniaDashboard />;
+  return <PactaraDashboard />;
 }
 

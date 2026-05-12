@@ -1,8 +1,8 @@
-# OMNIA Protocol
+# PACTARA Protocol
 
-OMNIA is a universal action protocol: identity, intent, consent, proof, value, and execution in one verifiable system.
+PACTARA is a universal action protocol: identity, intent, consent, proof, value, and execution in one verifiable system.
 
-This repository is an independent monorepo for the first full foundation of OMNIA:
+This repository is an independent monorepo for the first full foundation of PACTARA:
 
 - Rust + Axum API
 - PostgreSQL + SQLx
@@ -15,7 +15,7 @@ This repository is an independent monorepo for the first full foundation of OMNI
 ## Quick Start
 
 ```powershell
-cd "C:\Users\Stagiaire\Documents\Amadou PGC\Prs\Omnia"
+cd "C:\Users\Stagiaire\Documents\Amadou PGC\Prs\Pactara"
 copy .env.example .env
 docker compose up --build
 ```
@@ -56,7 +56,7 @@ npm run build
 
 ## Core Flow
 
-1. Create an OMNIA identity.
+1. Create an PACTARA identity.
 2. Create a draft PACT.
 3. Sign the PACT.
 4. Verify status, hash, signature, expiry, and revocation.
@@ -150,7 +150,7 @@ npm run build
 
 ## Security Note
 
-The first implementation supports developer custody of private keys so the API can demonstrate signing end to end. Production OMNIA identity custody should move private keys client-side, hardware-backed, or threshold-managed.
+The first implementation supports developer custody of private keys so the API can demonstrate signing end to end. Production PACTARA identity custody should move private keys client-side, hardware-backed, or threshold-managed.
 
 ## v0.2 Protocol Layers
 
@@ -161,23 +161,23 @@ The first implementation supports developer custody of private keys so the API c
 
 ## v0.3 Portable Trust Layer
 
-- **DID Document**: each OMNIA identity can expose a public decentralized identity document without leaking private keys.
+- **DID Document**: each PACTARA identity can expose a public decentralized identity document without leaking private keys.
 - **PACT Bundle**: a signed action can be exported with actor public key, proofs, revocation state, verification result, and timeline.
 - **PACT Timeline**: every relevant event around a PACT can be read as a chronological audit trail.
 - **Mandate Check**: an AI or agent action can be checked against explicit `can` and `cannot` scope before execution.
 
 ## v0.4 Offline Verification And Trust Graph
 
-- **Portable Verifier Crate**: `omnia-verifier` can validate a PACT Bundle without PostgreSQL or the API state.
+- **Portable Verifier Crate**: `pactara-verifier` can validate a PACT Bundle without PostgreSQL or the API state.
 - **Offline Bundle Verification API**: `POST /v1/bundles/verify` accepts an exported bundle and recomputes hash, signature, expiry, and revocation state from bundle contents.
 - **Trust Graph**: `GET /v1/graph/trust` projects identities, PACTs, proofs, mandates, and genomes into a protocol graph.
-- **Dashboard Expansion**: the web console now has Offline and Graph surfaces so OMNIA can be inspected as portable trust infrastructure, not only as CRUD records.
+- **Dashboard Expansion**: the web console now has Offline and Graph surfaces so PACTARA can be inspected as portable trust infrastructure, not only as CRUD records.
 
 ## v0.5 Civilization Operating Layer
 
 - **Domain OS**: economy, knowledge, health, governance, energy, link, space, and transport are seeded as first-class protocol modules.
 - **Sovereign Auth Prep**: passkey-style credentials, challenges, nonces, and signed request verification are now modeled.
-- **Sandbox Ledger**: OMNIA ships a double-entry internal ledger with sandbox `OMN` units and payment intents.
+- **Sandbox Ledger**: PACTARA ships a double-entry internal ledger with sandbox `PACT` units and payment intents.
 - **Mandated Agents**: agents can run only through a mandate and policy decision.
 - **Security Audit**: critical v0.5 actions write audit events alongside protocol events.
 
@@ -187,17 +187,17 @@ The first implementation supports developer custody of private keys so the API c
 - **Operational Overview**: `GET /v1/ops/overview` summarizes network counts, payment status, recent events, audit events, domain actions, and agent runs.
 - **Ledger Statements**: each account exposes credits, debits, net balance, and recent debit/credit entries.
 - **Payment History**: payment intents can be listed and inspected from API and dashboard.
-- **Ops Dashboard**: the web console now has a Mission Control surface for operating OMNIA as infrastructure, not only testing flows.
+- **Ops Dashboard**: the web console now has a Mission Control surface for operating PACTARA as infrastructure, not only testing flows.
 
 ## v0.7 Sovereign Runtime And Civilization Apps
 
 - **Sovereign Auth Runtime**: dev sessions, listable credentials, credential revocation, nonce replay protection, and signed request verification are exposed as first-class APIs.
 - **Guided Domain Workflows**: every seeded civilization domain can launch a workflow that creates PACTs, proofs, risk assessments, reviews, and audit trail.
-- **Advanced Sandbox Ledger**: assets, direct transfers, escrow holds, hold release, payment rejection, and sandbox `OMN` issuance are available without real money or blockchain dependency.
+- **Advanced Sandbox Ledger**: assets, direct transfers, escrow holds, hold release, payment rejection, and sandbox `PACT` issuance are available without real money or blockchain dependency.
 - **Supervised Agents**: agent tasks are queued, policy-gated, optionally human-approved, executed under mandate, and logged.
 - **Policy Studio**: persistent rules drive `allow`, `deny`, and `needs_review` decisions with precedence.
 - **Reputation Engine**: scores can be recomputed from signed PACTs, executed payments, revocations, proofs, and audit posture.
-- **Runtime Ops**: SSE snapshots, global search, workflow queue counts, held funds, pending agent tasks, and risk counters make OMNIA feel like an operating system, not just an API.
+- **Runtime Ops**: SSE snapshots, global search, workflow queue counts, held funds, pending agent tasks, and risk counters make PACTARA feel like an operating system, not just an API.
 - **Dashboard Expansion**: new Runtime, Workflows, Policy, Reputation, Search, and Stream tabs sit alongside ledger, agents, security, domains, and PACT verification.
 
 ## v0.8 World Runtime And Intelligence Layer
@@ -207,4 +207,4 @@ The first implementation supports developer custody of private keys so the API c
 - **Agent Crews**: supervised teams of mandated agents can be created and run through policy gating; sensitive work stops at `needs_review`.
 - **Civilization Signals**: scenario runs emit typed signals so risks become visible operational objects.
 - **Unified Timeline**: identities, events, PACTs, workflows, commands, scenarios, crews, runs, and signals can be read as one runtime history.
-- **Dashboard Expansion**: new World, Command, Crews, and Timeline tabs turn OMNIA into a visible command console for the eight civilization domains.
+- **Dashboard Expansion**: new World, Command, Crews, and Timeline tabs turn PACTARA into a visible command console for the eight civilization domains.

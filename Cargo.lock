@@ -1096,31 +1096,37 @@ dependencies = [
 ]
 
 [[package]]
-name = "omnia-agent"
+name = "once_cell"
+version = "1.21.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9f7c3e4beb33f85d45ae3e3a1792185706c8e16d043238c593331cc7cd313b50"
+
+[[package]]
+name = "pactara-agent"
 version = "0.1.0"
 dependencies = [
  "chrono",
- "omnia-core",
+ "pactara-core",
  "serde_json",
  "uuid",
 ]
 
 [[package]]
-name = "omnia-api"
+name = "pactara-api"
 version = "0.1.0"
 dependencies = [
  "anyhow",
  "axum",
  "chrono",
  "futures-util",
- "omnia-agent",
- "omnia-auth",
- "omnia-core",
- "omnia-crypto",
- "omnia-db",
- "omnia-domain",
- "omnia-ledger",
- "omnia-verifier",
+ "pactara-agent",
+ "pactara-auth",
+ "pactara-core",
+ "pactara-crypto",
+ "pactara-db",
+ "pactara-domain",
+ "pactara-ledger",
+ "pactara-verifier",
  "serde",
  "serde_json",
  "tokio",
@@ -1131,18 +1137,18 @@ dependencies = [
 ]
 
 [[package]]
-name = "omnia-auth"
+name = "pactara-auth"
 version = "0.1.0"
 dependencies = [
  "chrono",
- "omnia-core",
- "omnia-crypto",
+ "pactara-core",
+ "pactara-crypto",
  "serde_json",
  "uuid",
 ]
 
 [[package]]
-name = "omnia-core"
+name = "pactara-core"
 version = "0.1.0"
 dependencies = [
  "chrono",
@@ -1153,7 +1159,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "omnia-crypto"
+name = "pactara-crypto"
 version = "0.1.0"
 dependencies = [
  "base64",
@@ -1166,11 +1172,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "omnia-db"
+name = "pactara-db"
 version = "0.1.0"
 dependencies = [
  "chrono",
- "omnia-core",
+ "pactara-core",
  "serde_json",
  "sqlx",
  "thiserror 1.0.69",
@@ -1178,41 +1184,35 @@ dependencies = [
 ]
 
 [[package]]
-name = "omnia-domain"
+name = "pactara-domain"
 version = "0.1.0"
 dependencies = [
  "chrono",
- "omnia-core",
+ "pactara-core",
  "serde_json",
  "uuid",
 ]
 
 [[package]]
-name = "omnia-ledger"
+name = "pactara-ledger"
 version = "0.1.0"
 dependencies = [
  "chrono",
- "omnia-core",
+ "pactara-core",
  "serde_json",
  "uuid",
 ]
 
 [[package]]
-name = "omnia-verifier"
+name = "pactara-verifier"
 version = "0.1.0"
 dependencies = [
  "chrono",
- "omnia-core",
- "omnia-crypto",
+ "pactara-core",
+ "pactara-crypto",
  "serde_json",
  "uuid",
 ]
-
-[[package]]
-name = "once_cell"
-version = "1.21.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9f7c3e4beb33f85d45ae3e3a1792185706c8e16d043238c593331cc7cd313b50"
 
 [[package]]
 name = "parking"

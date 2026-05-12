@@ -1,4 +1,4 @@
-# OMNIA Protocol Spec v0.1
+# PACTARA Protocol Spec v0.1
 
 ## PACT
 
@@ -90,7 +90,7 @@ Mandates must expire in the future. Production deployments should require the pr
 
 ## DID Document
 
-An OMNIA identity can be rendered as a DID-like public document:
+An PACTARA identity can be rendered as a DID-like public document:
 
 - public key only
 - authentication method
@@ -114,7 +114,7 @@ It contains:
 
 ## Offline Bundle Verification
 
-An OMNIA verifier can validate a PACT Bundle without reading the database.
+An PACTARA verifier can validate a PACT Bundle without reading the database.
 
 The verifier must:
 
@@ -171,7 +171,7 @@ Initial edge types:
 
 ## Civilization Domains
 
-OMNIA v0.5 defines eight seeded operating domains:
+PACTARA v0.5 defines eight seeded operating domains:
 
 - economy
 - knowledge
@@ -193,22 +193,22 @@ The v0.5 auth layer introduces passkey-ready structures:
 - request nonces
 - signed request verification
 
-Local development keeps auth optional. Production can require auth with `OMNIA_AUTH_REQUIRED=true`.
+Local development keeps auth optional. Production can require auth with `PACTARA_AUTH_REQUIRED=true`.
 
 ## Ledger And Payments
 
-The v0.5 ledger is sandbox-only and uses the `OMN` internal unit.
+The v0.5 ledger is sandbox-only and uses the `PACT` internal unit.
 
 Rules:
 
-- ledger accounts are owned by OMNIA identities
+- ledger accounts are owned by PACTARA identities
 - payment intents must reference a PACT
 - executing payment requires the PACT to be signed and active
 - every transfer writes balanced debit and credit entries
 
 ## Agents And Policy
 
-Agents are OMNIA identities with an `AgentProfile`.
+Agents are PACTARA identities with an `AgentProfile`.
 
 Rules:
 
@@ -219,7 +219,7 @@ Rules:
 
 ## Mission Control
 
-OMNIA v0.6 adds an operational plane for running the protocol as infrastructure.
+PACTARA v0.6 adds an operational plane for running the protocol as infrastructure.
 
 Runtime readiness:
 
@@ -264,7 +264,7 @@ Payment execution remains sandbox-only and still requires a signed active PACT.
 
 ## Sovereign Runtime
 
-OMNIA v0.7 turns the operating layer into a stateful sovereign runtime.
+PACTARA v0.7 turns the operating layer into a stateful sovereign runtime.
 
 Runtime objects:
 
@@ -273,18 +273,18 @@ Runtime objects:
 - `workflow_templates`: seeded guided flows for the eight civilization domains
 - `domain_workflows`: runtime instances that create PACTs, proofs, risk assessments, reviews, and steps
 - `ledger_holds`: escrow-like reservations over sandbox funds
-- `token_issuance_events`: audited sandbox `OMN` issuance records
+- `token_issuance_events`: audited sandbox `PACT` issuance records
 - `agent_tasks`: supervised agent work queue
 - `reputation_scores` and `reputation_events`: derived trust state
 - `system_notifications`: runtime notification queue
 
 ## Auth Sessions And Signed Requests
 
-Production deployments can require authenticated mutations with `OMNIA_AUTH_REQUIRED=true`.
+Production deployments can require authenticated mutations with `PACTARA_AUTH_REQUIRED=true`.
 
 Accepted mutation credentials:
 
-- a valid `x-omnia-session` token
+- a valid `x-pactara-session` token
 - a verified signed request pathway
 - local development fallback when auth is not required
 
@@ -330,7 +330,7 @@ New v0.7 rules:
 - every transfer must remain double-entry: debit amount equals credit amount
 - payment intents can be rejected before execution
 
-`OMN` has no real monetary value in this implementation.
+`PACT` has no real monetary value in this implementation.
 
 ## Agent Tasks
 
@@ -378,11 +378,11 @@ Global search returns typed results across identities, PACTs, domains, payments,
 
 ## World Runtime
 
-OMNIA v0.8 adds a simulation and command layer above the sovereign runtime.
+PACTARA v0.8 adds a simulation and command layer above the sovereign runtime.
 
 New runtime objects:
 
-- `world_scenarios`: multi-domain scenario graphs owned by an OMNIA identity
+- `world_scenarios`: multi-domain scenario graphs owned by an PACTARA identity
 - `scenario_runs`: deterministic sandbox simulation results
 - `runtime_commands`: structured operator commands transformed into protocol objects
 - `agent_crews`: supervised teams of mandated agents
@@ -437,7 +437,7 @@ Crew runs evaluate policy before execution. If policy returns `deny`, the run is
 
 ## Unified Timeline
 
-`GET /v1/runtime/timeline` returns runtime items sorted by creation time. It is the operator-readable history of OMNIA and includes:
+`GET /v1/runtime/timeline` returns runtime items sorted by creation time. It is the operator-readable history of PACTARA and includes:
 
 - protocol events
 - world scenarios

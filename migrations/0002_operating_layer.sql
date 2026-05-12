@@ -157,7 +157,7 @@ CREATE TABLE IF NOT EXISTS audit_events (
 );
 
 INSERT INTO ledger_assets (id, symbol, name, decimals, sandbox, metadata)
-VALUES ('asset:omn', 'OMN', 'OMNIA Sandbox Unit', 0, true, '{"purpose":"sandbox settlement"}')
+VALUES ('asset:pact', 'PACT', 'PACTARA Sandbox Unit', 0, true, '{"purpose":"sandbox settlement"}')
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO domain_modules (id, label, domain_kind, description, enabled, capabilities)
@@ -174,7 +174,7 @@ ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO domain_action_templates (id, domain_id, action_type, label, schema, default_terms, risk_level)
 VALUES
-  ('11111111-1111-4111-8111-111111111111', 'economy', 'trade.create', 'Create trade action', '{"required":["amount","asset"]}', '{"settlement":"omnia_sandbox","asset":"OMN"}', 'medium'),
+  ('11111111-1111-4111-8111-111111111111', 'economy', 'trade.create', 'Create trade action', '{"required":["amount","asset"]}', '{"settlement":"pactara_sandbox","asset":"PACT"}', 'medium'),
   ('22222222-2222-4222-8222-222222222222', 'knowledge', 'knowledge.claim', 'Register knowledge claim', '{"required":["claim","source"]}', '{"license":"attribution","royalty":"future"}', 'low'),
   ('33333333-3333-4333-8333-333333333333', 'health', 'consent.grant', 'Grant health consent', '{"required":["scope","duration"]}', '{"raw_medical_data":false,"revocable":true}', 'high'),
   ('44444444-4444-4444-8444-444444444444', 'governance', 'proposal.create', 'Create governance proposal', '{"required":["proposal","jurisdiction"]}', '{"debate_window":"30d","audit":"public"}', 'medium'),

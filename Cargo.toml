@@ -1,14 +1,14 @@
 [workspace]
 members = [
-  "crates/omnia-core",
-  "crates/omnia-crypto",
-  "crates/omnia-auth",
-  "crates/omnia-domain",
-  "crates/omnia-ledger",
-  "crates/omnia-agent",
-  "crates/omnia-db",
-  "crates/omnia-verifier",
-  "crates/omnia-api",
+  "crates/pactara-core",
+  "crates/pactara-crypto",
+  "crates/pactara-auth",
+  "crates/pactara-domain",
+  "crates/pactara-ledger",
+  "crates/pactara-agent",
+  "crates/pactara-db",
+  "crates/pactara-verifier",
+  "crates/pactara-api",
 ]
 resolver = "2"
 
@@ -16,7 +16,7 @@ resolver = "2"
 edition = "2021"
 rust-version = "1.88"
 license = "Apache-2.0"
-authors = ["OMNIA Protocol"]
+authors = ["PACTARA Protocol"]
 
 [workspace.dependencies]
 anyhow = "1.0"
