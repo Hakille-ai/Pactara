@@ -23,20 +23,21 @@ use pactara_core::{
     CreateAgentRunRequest, CreateAgentTaskRequest, CreateAuthChallengeRequest,
     CreateDevSessionRequest, CreateDomainActionRequest, CreateGenomeRequest, CreateIdentityRequest,
     CreateLedgerAccountRequest, CreateLedgerHoldRequest, CreateLedgerTransferRequest,
-    CreateMandateRequest, CreatePactRequest, CreatePaymentIntentRequest, CreatePolicyRuleRequest,
-    CreateProofRequest, CreateRuntimeCommandRequest, CreateTokenIssuanceRequest,
-    CreateWorkflowRequest, CreateWorldScenarioRequest, Credential, CrewRun, CrewRunResponse,
-    DidDocument, DomainAction, DomainActionResponse, DomainActionTemplate, DomainModule,
-    DomainWorkflow, ExecutePaymentResponse, Genome, Identity, IdentityKind, LedgerAccount,
-    LedgerAsset, LedgerHold, LedgerStatement, LedgerTransferResponse, Mandate, MandateCheckRequest,
-    MandateCheckResponse, OperationalOverview, Pact, PactBundle, PactStatus,
-    PasskeyLoginFinishRequest, PasskeyLoginStartRequest, PasskeyRegisterFinishRequest,
-    PasskeyRegisterStartRequest, PaymentIntent, PolicyDecision, PolicyEvaluateRequest, PolicyRule,
-    Proof, ReputationResponse, ReviewWorkflowRequest, RevokePactRequest, RunAgentCrewRequest,
-    RunWorldScenarioRequest, RuntimeCommand, RuntimeHealth, RuntimeTimelineItem, ScenarioEdge,
-    ScenarioNode, ScenarioRun, SearchResponse, SignedRequest, SignedRequestVerification,
-    TokenIssuanceEvent, TokenIssuanceResponse, TrustGraph, VerifyPactResponse, WorkflowResponse,
-    WorkflowTemplate, WorldScenario,
+    CreateMandateRequest, CreateNotificationRequest, CreatePactRequest, CreatePaymentIntentRequest,
+    CreatePolicyRuleRequest, CreateProofRequest, CreateRuntimeCommandRequest,
+    CreateTokenIssuanceRequest, CreateWorkflowRequest, CreateWorldScenarioRequest, Credential,
+    CrewRun, CrewRunResponse, DidDocument, DomainAction, DomainActionResponse,
+    DomainActionTemplate, DomainModule, DomainWorkflow, ExecutePaymentResponse, Genome, Identity,
+    IdentityKind, LedgerAccount, LedgerAsset, LedgerHold, LedgerLimit, LedgerStatement,
+    LedgerTransferResponse, Mandate, MandateCheckRequest, MandateCheckResponse,
+    OperationalOverview, Pact, PactBundle, PactStatus, PasskeyLoginFinishRequest,
+    PasskeyLoginStartRequest, PasskeyRegisterFinishRequest, PasskeyRegisterStartRequest,
+    PaymentIntent, PolicyDecision, PolicyEvaluateRequest, PolicyRule, Proof, ReputationResponse,
+    ReviewWorkflowRequest, RevokePactRequest, RunAgentCrewRequest, RunWorldScenarioRequest,
+    RuntimeCommand, RuntimeHealth, RuntimeTimelineItem, ScenarioEdge, ScenarioNode, ScenarioRun,
+    SearchResponse, SignedRequest, SignedRequestVerification, TokenIssuanceEvent,
+    TokenIssuanceResponse, TrustGraph, UpsertLedgerLimitRequest, VerifyPactResponse,
+    WorkflowResponse, WorkflowTemplate, WorldScenario,
 };
 use pactara_crypto::{generate_key_material, hash_value, sign_value, verify_value};
 use pactara_db::{Db, DbError};
@@ -51,10 +52,11 @@ use uuid::Uuid;
 use validation::{
     validate_agent_crew_request, validate_agent_profile_request, validate_agent_run_request,
     validate_agent_task_request, validate_ledger_account_request, validate_ledger_hold_request,
-    validate_ledger_transfer_request, validate_mandate_request, validate_pact_request,
-    validate_payment_intent_request, validate_policy_evaluate_request,
-    validate_policy_rule_request, validate_runtime_command_request,
-    validate_token_issuance_request, validate_workflow_request, validate_world_scenario_request,
+    validate_ledger_limit_request, validate_ledger_transfer_request, validate_mandate_request,
+    validate_notification_request, validate_pact_request, validate_payment_intent_request,
+    validate_policy_evaluate_request, validate_policy_rule_request,
+    validate_runtime_command_request, validate_token_issuance_request, validate_workflow_request,
+    validate_world_scenario_request,
 };
 
 #[derive(Clone)]
@@ -117,6 +119,10 @@ pub fn build_router(state: AppState) -> Router {
         .route("/v1/ledger/holds", post(create_ledger_hold))
         .route("/v1/ledger/holds/:id/release", post(release_ledger_hold))
         .route(
+            "/v1/ledger/accounts/:id/limit",
+            get(get_ledger_limit).post(upsert_ledger_limit),
+        )
+        .route(
             "/v1/payments/intents",
             get(list_payment_intents).post(create_payment_intent),
         )
@@ -167,6 +173,8 @@ pub fn build_router(state: AppState) -> Router {
         .route("/v1/ops/stream", get(ops_stream))
         .route("/v1/audit/events", get(list_audit_events))
         .route("/v1/events", get(list_events))
+        .route("/v1/notifications", get(list_notifications).post(create_notification))
+        .route("/v1/notifications/:id/read", post(mark_notification_as_read))
         .layer(CorsLayer::permissive())
         .layer(TraceLayer::new_for_http())
         .with_state(state)
@@ -2545,6 +2553,73 @@ async fn list_events(
     Query(query): Query<EventsQuery>,
 ) -> Result<Json<Vec<pactara_core::EventLog>>, ApiError> {
     Ok(Json(state.db.list_events(query.limit.unwrap_or(50)).await?))
+}
+
+#[derive(Debug, Deserialize)]
+struct NotificationsQuery {
+    unread_only: Option<bool>,
+    limit: Option<i64>,
+}
+
+async fn list_notifications(
+    State(state): State<AppState>,
+    Query(query): Query<NotificationsQuery>,
+) -> Result<Json<Vec<pactara_core::SystemNotification>>, ApiError> {
+    Ok(Json(
+        state
+            .db
+            .list_notifications(query.unread_only.unwrap_or(false), query.limit.unwrap_or(50))
+            .await?,
+    ))
+}
+
+async fn create_notification(
+    headers: HeaderMap,
+    State(state): State<AppState>,
+    Json(payload): Json<CreateNotificationRequest>,
+) -> Result<Json<pactara_core::SystemNotification>, ApiError> {
+    ensure_auth(&state, &headers).await?;
+    validate_notification_request(&payload)?;
+    let notification = pactara_core::SystemNotification {
+        id: Uuid::new_v4(),
+        channel: payload.channel,
+        severity: payload.severity.unwrap_or_else(|| "info".to_string()),
+        title: payload.title,
+        payload: payload.payload,
+        created_at: Utc::now(),
+        read_at: None,
+    };
+    Ok(Json(state.db.create_notification(notification).await?))
+}
+
+async fn mark_notification_as_read(
+    headers: HeaderMap,
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Result<Json<pactara_core::SystemNotification>, ApiError> {
+    ensure_auth(&state, &headers).await?;
+    Ok(Json(state.db.mark_notification_as_read(id).await?))
+}
+
+async fn get_ledger_limit(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Result<Json<Option<LedgerLimit>>, ApiError> {
+    Ok(Json(state.db.get_ledger_limit(id).await?))
+}
+
+async fn upsert_ledger_limit(
+    headers: HeaderMap,
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<UpsertLedgerLimitRequest>,
+) -> Result<Json<LedgerLimit>, ApiError> {
+    ensure_auth(&state, &headers).await?;
+    if payload.account_id != id {
+        return Err(ApiError::bad_request("account_id in path and body must match"));
+    }
+    validate_ledger_limit_request(&payload)?;
+    Ok(Json(state.db.upsert_ledger_limit(payload).await?))
 }
 
 async fn ensure_auth(state: &AppState, headers: &HeaderMap) -> Result<(), ApiError> {

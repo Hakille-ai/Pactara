@@ -625,6 +625,23 @@ pub struct LedgerAccount {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LedgerLimit {
+    pub id: Uuid,
+    pub account_id: Uuid,
+    pub daily_limit: Option<i64>,
+    pub single_transfer_limit: Option<i64>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UpsertLedgerLimitRequest {
+    pub account_id: Uuid,
+    pub daily_limit: Option<i64>,
+    pub single_transfer_limit: Option<i64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateLedgerAccountRequest {
     pub owner: PactaraId,
     pub asset_id: Option<String>,
@@ -1303,6 +1320,26 @@ pub struct CivilizationSignal {
     pub payload: Value,
     pub status: String,
     pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SystemNotification {
+    pub id: Uuid,
+    pub channel: String,
+    pub severity: String,
+    pub title: String,
+    pub payload: Value,
+    pub created_at: DateTime<Utc>,
+    pub read_at: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CreateNotificationRequest {
+    pub channel: String,
+    pub severity: Option<String>,
+    pub title: String,
+    #[serde(default)]
+    pub payload: Value,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
