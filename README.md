@@ -1,7 +1,7 @@
 # PACTARA Protocol
 
 [![Stability: Experimental](https://img.shields.io/badge/stability-experimental-orange.svg)](https://github.com/pactara/pactara)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License: Apache--2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 
 **PACTARA** is a universal action protocol designed for the next generation of digital interaction. It provides a unified framework for **Identity, Intent, Consent, Proof, Value, and Execution** in a single, verifiable, and sovereign system.
 
@@ -47,6 +47,15 @@ PACTARA is built in evolutionary layers, moving from a foundational API to a wor
 
 ---
 
+## 📖 Documentation
+
+*   **[Protocol Specification](docs/protocol-spec/README.md)**: Deep dive into PACT structures and verification rules.
+*   **[Whitepaper](docs/whitepaper/README.md)**: Visionary thesis and strategic roadmap of the protocol.
+*   **[API Reference](docs/API.md)**: Comprehensive endpoint documentation for developers.
+*   **[Contributing Guide](CONTRIBUTING.md)**: Guidelines for contributing to the PACTARA ecosystem.
+
+---
+
 ## 🛠 Architecture
 
 PACTARA is implemented as a high-performance Rust monorepo, optimized for safety, concurrency, and verifiability.
@@ -87,7 +96,7 @@ cargo test --workspace
 Current developer builds support server-side custody for demonstration purposes. Production implementations should migrate private keys to client-side hardware or threshold-managed environments.
 
 ## 📄 License
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
 
 ---
 © 2024 PACTARA Protocol. Building the verifiable substrate for a sovereign future.
