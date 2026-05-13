@@ -1663,6 +1663,49 @@ impl Db {
         rows.into_iter().map(row_to_ledger_asset).collect()
     }
 
+    pub async fn upsert_ledger_limit(
+        &self,
+        request: pactara_core::UpsertLedgerLimitRequest,
+    ) -> Result<pactara_core::LedgerLimit, DbError> {
+        let row = sqlx::query(
+            r#"
+            INSERT INTO ledger_limits (id, account_id, daily_limit, single_transfer_limit, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, now(), now())
+            ON CONFLICT (account_id) DO UPDATE
+              SET daily_limit = EXCLUDED.daily_limit,
+                  single_transfer_limit = EXCLUDED.single_transfer_limit,
+                  updated_at = now()
+            RETURNING id, account_id, daily_limit, single_transfer_limit, created_at, updated_at
+            "#,
+        )
+        .bind(Uuid::new_v4())
+        .bind(request.account_id)
+        .bind(request.daily_limit)
+        .bind(request.single_transfer_limit)
+        .fetch_one(&self.pool)
+        .await?;
+
+        row_to_ledger_limit(row)
+    }
+
+    pub async fn get_ledger_limit(
+        &self,
+        account_id: Uuid,
+    ) -> Result<Option<pactara_core::LedgerLimit>, DbError> {
+        let row = sqlx::query(
+            r#"
+            SELECT id, account_id, daily_limit, single_transfer_limit, created_at, updated_at
+            FROM ledger_limits
+            WHERE account_id = $1
+            "#,
+        )
+        .bind(account_id)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        row.map(row_to_ledger_limit).transpose()
+    }
+
     pub async fn active_holds_total(&self, account_id: Uuid) -> Result<i64, DbError> {
         let row = sqlx::query(
             r#"
@@ -1676,6 +1719,21 @@ impl Db {
         .await?;
 
         Ok(row.try_get("held")?)
+    }
+
+    pub async fn daily_transfer_total(&self, account_id: Uuid) -> Result<i64, DbError> {
+        let row = sqlx::query(
+            r#"
+            SELECT COALESCE(SUM(amount), 0)::BIGINT AS total
+            FROM ledger_entries
+            WHERE account_id = $1 AND direction = 'debit' AND created_at >= CURRENT_DATE
+            "#,
+        )
+        .bind(account_id)
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(row.try_get("total")?)
     }
 
     pub async fn create_ledger_transfer(
@@ -1708,6 +1766,27 @@ impl Db {
             return Err(DbError::InvalidOperation(
                 "debit account has insufficient available balance".to_string(),
             ));
+        }
+
+        if let Some(limit) = self.get_ledger_limit(debit.id).await? {
+            if let Some(single) = limit.single_transfer_limit {
+                if amount > single {
+                    return Err(DbError::InvalidOperation(format!(
+                        "transfer amount {} exceeds single transfer limit of {}",
+                        amount, single
+                    )));
+                }
+            }
+            if let Some(daily) = limit.daily_limit {
+                let current_daily = self.daily_transfer_total(debit.id).await?;
+                if current_daily + amount > daily {
+                    return Err(DbError::InvalidOperation(format!(
+                        "transfer amount {} exceeds remaining daily limit of {}",
+                        amount,
+                        daily - current_daily
+                    )));
+                }
+            }
         }
 
         let transfer_id = Uuid::new_v4();
@@ -1903,6 +1982,27 @@ impl Db {
             return Err(DbError::InvalidOperation(
                 "payer account has insufficient balance".to_string(),
             ));
+        }
+
+        if let Some(limit) = self.get_ledger_limit(payer.id).await? {
+            if let Some(single) = limit.single_transfer_limit {
+                if payment.amount > single {
+                    return Err(DbError::InvalidOperation(format!(
+                        "payment amount {} exceeds single transfer limit of {}",
+                        payment.amount, single
+                    )));
+                }
+            }
+            if let Some(daily) = limit.daily_limit {
+                let current_daily = self.daily_transfer_total(payer.id).await?;
+                if current_daily + payment.amount > daily {
+                    return Err(DbError::InvalidOperation(format!(
+                        "payment amount {} exceeds remaining daily limit of {}",
+                        payment.amount,
+                        daily - current_daily
+                    )));
+                }
+            }
         }
 
         let transfer_id = Uuid::new_v4();
@@ -3330,6 +3430,84 @@ impl Db {
         Ok(signal)
     }
 
+    pub async fn create_notification(
+        &self,
+        notification: pactara_core::SystemNotification,
+    ) -> Result<pactara_core::SystemNotification, DbError> {
+        let row = sqlx::query(
+            r#"
+            INSERT INTO system_notifications (id, channel, severity, title, payload, created_at)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            RETURNING id, channel, severity, title, payload, created_at, read_at
+            "#,
+        )
+        .bind(notification.id)
+        .bind(&notification.channel)
+        .bind(&notification.severity)
+        .bind(&notification.title)
+        .bind(&notification.payload)
+        .bind(notification.created_at)
+        .fetch_one(&self.pool)
+        .await?;
+
+        row_to_system_notification(row)
+    }
+
+    pub async fn list_notifications(
+        &self,
+        unread_only: bool,
+        limit: i64,
+    ) -> Result<Vec<pactara_core::SystemNotification>, DbError> {
+        let rows = if unread_only {
+            sqlx::query(
+                r#"
+                SELECT id, channel, severity, title, payload, created_at, read_at
+                FROM system_notifications
+                WHERE read_at IS NULL
+                ORDER BY created_at DESC
+                LIMIT $1
+                "#,
+            )
+            .bind(limit.clamp(1, 200))
+            .fetch_all(&self.pool)
+            .await?
+        } else {
+            sqlx::query(
+                r#"
+                SELECT id, channel, severity, title, payload, created_at, read_at
+                FROM system_notifications
+                ORDER BY created_at DESC
+                LIMIT $1
+                "#,
+            )
+            .bind(limit.clamp(1, 200))
+            .fetch_all(&self.pool)
+            .await?
+        };
+
+        rows.into_iter().map(row_to_system_notification).collect()
+    }
+
+    pub async fn mark_notification_as_read(
+        &self,
+        id: Uuid,
+    ) -> Result<pactara_core::SystemNotification, DbError> {
+        let row = sqlx::query(
+            r#"
+            UPDATE system_notifications
+            SET read_at = now()
+            WHERE id = $1
+            RETURNING id, channel, severity, title, payload, created_at, read_at
+            "#,
+        )
+        .bind(id)
+        .fetch_optional(&self.pool)
+        .await?
+        .ok_or(DbError::NotFound)?;
+
+        row_to_system_notification(row)
+    }
+
     pub async fn runtime_timeline(&self, limit: i64) -> Result<Vec<RuntimeTimelineItem>, DbError> {
         let per_kind = limit.clamp(1, 200);
         let mut items = Vec::new();
@@ -3601,6 +3779,31 @@ fn row_to_identity(row: sqlx::postgres::PgRow) -> Result<Identity, DbError> {
         public_key: row.try_get("public_key")?,
         private_key: row.try_get("private_key")?,
         created_at: row.try_get("created_at")?,
+    })
+}
+
+fn row_to_ledger_limit(row: sqlx::postgres::PgRow) -> Result<pactara_core::LedgerLimit, DbError> {
+    Ok(pactara_core::LedgerLimit {
+        id: row.try_get("id")?,
+        account_id: row.try_get("account_id")?,
+        daily_limit: row.try_get("daily_limit")?,
+        single_transfer_limit: row.try_get("single_transfer_limit")?,
+        created_at: row.try_get("created_at")?,
+        updated_at: row.try_get("updated_at")?,
+    })
+}
+
+fn row_to_system_notification(
+    row: sqlx::postgres::PgRow,
+) -> Result<pactara_core::SystemNotification, DbError> {
+    Ok(pactara_core::SystemNotification {
+        id: row.try_get("id")?,
+        channel: row.try_get("channel")?,
+        severity: row.try_get("severity")?,
+        title: row.try_get("title")?,
+        payload: row.try_get("payload")?,
+        created_at: row.try_get("created_at")?,
+        read_at: row.try_get("read_at")?,
     })
 }
 

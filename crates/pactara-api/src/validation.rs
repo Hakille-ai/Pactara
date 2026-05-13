@@ -2,10 +2,10 @@ use chrono::Utc;
 use pactara_core::{
     CreateAgentCrewRequest, CreateAgentProfileRequest, CreateAgentRunRequest,
     CreateAgentTaskRequest, CreateLedgerAccountRequest, CreateLedgerHoldRequest,
-    CreateLedgerTransferRequest, CreateMandateRequest, CreatePactRequest,
-    CreatePaymentIntentRequest, CreatePolicyRuleRequest, CreateRuntimeCommandRequest,
-    CreateTokenIssuanceRequest, CreateWorkflowRequest, CreateWorldScenarioRequest,
-    PolicyEvaluateRequest,
+    CreateLedgerTransferRequest, CreateMandateRequest, CreateNotificationRequest,
+    CreatePactRequest, CreatePaymentIntentRequest, CreatePolicyRuleRequest,
+    CreateRuntimeCommandRequest, CreateTokenIssuanceRequest, CreateWorkflowRequest,
+    CreateWorldScenarioRequest, PolicyEvaluateRequest, UpsertLedgerLimitRequest,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -65,6 +65,34 @@ pub(crate) fn validate_pact_request(payload: &CreatePactRequest) -> Result<(), V
         .is_some_and(|expires_at| *expires_at <= Utc::now())
     {
         return Err(invalid("PACT expires_at must be in the future"));
+    }
+    Ok(())
+}
+
+pub(crate) fn validate_notification_request(
+    payload: &CreateNotificationRequest,
+) -> Result<(), ValidationError> {
+    require_text(&payload.channel, "notification channel is required")?;
+    require_text(&payload.title, "notification title is required")?;
+    require_optional_text(
+        payload.severity.as_ref(),
+        "notification severity cannot be empty",
+    )?;
+    Ok(())
+}
+
+pub(crate) fn validate_ledger_limit_request(
+    payload: &UpsertLedgerLimitRequest,
+) -> Result<(), ValidationError> {
+    if let Some(daily) = payload.daily_limit {
+        if daily < 0 {
+            return Err(invalid("daily_limit cannot be negative"));
+        }
+    }
+    if let Some(single) = payload.single_transfer_limit {
+        if single < 0 {
+            return Err(invalid("single_transfer_limit cannot be negative"));
+        }
     }
     Ok(())
 }
