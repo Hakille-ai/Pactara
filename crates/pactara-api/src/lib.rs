@@ -1655,6 +1655,8 @@ fn risk_from_workflow(payload: &CreateWorkflowRequest) -> pactara_core::RiskAsse
         risk_level: risk_level.to_string(),
         score,
         reasons: vec![reason.to_string()],
+        mitigation_strategy: None,
+        confidence_score: Some(0.85),
         created_at: Utc::now(),
     }
 }
@@ -1806,6 +1808,8 @@ async fn run_world_scenario(
                 format!("{} dependency edges observed", scenario.edges.len()),
                 "deterministic v0.8 sandbox impact model".to_string(),
             ],
+            mitigation_strategy: Some("Simulate counter-measures in sandbox".to_string()),
+            confidence_score: Some(0.92),
             created_at: Utc::now(),
         })
         .await?;
@@ -1877,6 +1881,8 @@ async fn run_world_scenario(
             } else {
                 "open".to_string()
             },
+            tags: vec!["simulation".to_string(), scenario.domain_id.clone()],
+            correlation_id: Some(risk.id),
             created_at: Utc::now(),
         })
         .await?;
@@ -2465,6 +2471,8 @@ fn risk_from_command(payload: &CreateRuntimeCommandRequest) -> pactara_core::Ris
         risk_level: risk_level.to_string(),
         score,
         reasons: vec![reason.to_string()],
+        mitigation_strategy: None,
+        confidence_score: Some(0.75),
         created_at: Utc::now(),
     }
 }

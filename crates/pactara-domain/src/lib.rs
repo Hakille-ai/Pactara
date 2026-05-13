@@ -2,7 +2,7 @@ use chrono::Utc;
 use pactara_core::{CreateDomainActionRequest, CreatePactRequest, DomainModule};
 use serde_json::{json, Value};
 
-pub const BUILTIN_DOMAINS: [&str; 8] = [
+pub const BUILTIN_DOMAINS: [&str; 9] = [
     "economy",
     "knowledge",
     "health",
@@ -11,6 +11,7 @@ pub const BUILTIN_DOMAINS: [&str; 8] = [
     "link",
     "space",
     "transport",
+    "security",
 ];
 
 pub fn domain_label(id: &str) -> &'static str {
@@ -23,6 +24,7 @@ pub fn domain_label(id: &str) -> &'static str {
         "link" => "Link",
         "space" => "Space",
         "transport" => "Transport",
+        "security" => "Security",
         _ => "Unknown",
     }
 }
@@ -37,6 +39,7 @@ pub fn domain_description(id: &str) -> &'static str {
         "link" => "Human relationships, consent, communication and creative exchange.",
         "space" => "Places, resources, territory, infrastructure and physical-world state.",
         "transport" => "Movement of goods, routing, chain of custody and delivery.",
+        "security" => "Threat detection, incident response, and protocol integrity actions.",
         _ => "External PACTARA domain.",
     }
 }
@@ -105,6 +108,9 @@ fn default_capabilities(id: &str) -> Value {
         "transport" => {
             json!({"actions": ["shipment.create", "custody.transfer"], "tracking": true})
         }
+        "security" => {
+            json!({"actions": ["threat.report", "integrity.verify"], "criticality": "high"})
+        }
         _ => json!({}),
     }
 }
@@ -115,9 +121,10 @@ mod tests {
     use serde_json::json;
 
     #[test]
-    fn ships_eight_builtin_domains() {
-        assert_eq!(builtin_domain_modules().len(), 8);
+    fn ships_builtin_domains() {
+        assert_eq!(builtin_domain_modules().len(), 9);
         assert!(BUILTIN_DOMAINS.contains(&"health"));
+        assert!(BUILTIN_DOMAINS.contains(&"security"));
     }
 
     #[test]
