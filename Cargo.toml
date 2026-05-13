@@ -9,6 +9,7 @@ members = [
   "crates/pactara-db",
   "crates/pactara-verifier",
   "crates/pactara-api",
+  "crates/pactara-intelligence",
 ]
 resolver = "2"
 

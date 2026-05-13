@@ -1032,6 +1032,8 @@ pub struct RiskAssessment {
     pub risk_level: String,
     pub score: i32,
     pub reasons: Vec<String>,
+    pub mitigation_strategy: Option<String>,
+    pub confidence_score: Option<f32>,
     pub created_at: DateTime<Utc>,
 }
 
@@ -1302,6 +1304,9 @@ pub struct CivilizationSignal {
     #[serde(default)]
     pub payload: Value,
     pub status: String,
+    #[serde(default)]
+    pub tags: Vec<String>,
+    pub correlation_id: Option<Uuid>,
     pub created_at: DateTime<Utc>,
 }
 

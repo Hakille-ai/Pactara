@@ -3,6 +3,7 @@ mod counters;
 use std::collections::BTreeMap;
 
 use chrono::{DateTime, Utc};
+use moka::future::Cache;
 use counters::{
     count_audit_denies_for_actor, count_pacts_for_actor_status, count_proofs_for_identity,
     count_table, count_where, CountPredicate, CountTable,
@@ -42,6 +43,7 @@ pub enum DbError {
 #[derive(Clone)]
 pub struct Db {
     pool: PgPool,
+    identity_cache: Cache<String, Identity>,
 }
 
 impl Db {
@@ -51,7 +53,15 @@ impl Db {
             .connect(database_url)
             .await?;
 
-        Ok(Self { pool })
+        let identity_cache = Cache::builder()
+            .max_capacity(10_000)
+            .time_to_live(std::time::Duration::from_secs(600))
+            .build();
+
+        Ok(Self {
+            pool,
+            identity_cache,
+        })
     }
 
     pub async fn migrate(&self) -> Result<(), DbError> {
@@ -86,6 +96,10 @@ impl Db {
         .await?;
 
         let identity = row_to_identity(row)?;
+        self.identity_cache
+            .insert(identity.id.clone(), identity.clone())
+            .await;
+
         self.append_event(
             "identity.created",
             &identity.id,
@@ -101,6 +115,10 @@ impl Db {
     }
 
     pub async fn get_identity(&self, id: &str) -> Result<Identity, DbError> {
+        if let Some(identity) = self.identity_cache.get(id).await {
+            return Ok(identity);
+        }
+
         let row = sqlx::query(
             r#"
             SELECT id, label, kind, public_key, private_key, created_at
@@ -113,7 +131,11 @@ impl Db {
         .await?
         .ok_or(DbError::NotFound)?;
 
-        row_to_identity(row)
+        let identity = row_to_identity(row)?;
+        self.identity_cache
+            .insert(identity.id.clone(), identity.clone())
+            .await;
+        Ok(identity)
     }
 
     pub async fn create_pact(&self, pact: Pact) -> Result<Pact, DbError> {
@@ -3792,6 +3814,8 @@ fn row_to_risk_assessment(row: sqlx::postgres::PgRow) -> Result<RiskAssessment, 
         risk_level: row.try_get("risk_level")?,
         score: row.try_get("score")?,
         reasons: value_to_string_vec(&reasons),
+        mitigation_strategy: row.try_get("mitigation_strategy")?,
+        confidence_score: row.try_get("confidence_score")?,
         created_at: row.try_get("created_at")?,
     })
 }
@@ -4101,6 +4125,8 @@ fn row_to_civilization_signal(row: sqlx::postgres::PgRow) -> Result<Civilization
         title: row.try_get("title")?,
         payload: row.try_get("payload")?,
         status: row.try_get("status")?,
+        tags: row.try_get("tags")?,
+        correlation_id: row.try_get("correlation_id")?,
         created_at: row.try_get("created_at")?,
     })
 }
