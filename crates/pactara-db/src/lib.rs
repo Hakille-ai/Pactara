@@ -47,6 +47,14 @@ pub struct Db {
 }
 
 impl Db {
+    pub fn mock() -> Self {
+        let pool = sqlx::PgPool::connect_lazy("postgres://localhost/unused").unwrap();
+        let identity_cache = Cache::builder()
+            .max_capacity(10)
+            .build();
+        Self { pool, identity_cache }
+    }
+
     pub async fn connect(database_url: &str) -> Result<Self, DbError> {
         let pool = PgPoolOptions::new()
             .max_connections(10)
