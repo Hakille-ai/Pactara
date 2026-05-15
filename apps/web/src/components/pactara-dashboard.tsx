@@ -381,6 +381,7 @@ export function PactaraDashboard() {
               className="ml-2 rounded border border-ink/10 p-2 text-ink/70 hover:bg-ink hover:text-white"
               onClick={() => void refreshHealth()}
               title="Refresh API status"
+              aria-label="Refresh API status"
             >
               <RefreshCw size={16} />
             </button>
@@ -395,6 +396,7 @@ export function PactaraDashboard() {
               <button
                 key={item.id}
                 onClick={() => setView(item.id)}
+                aria-pressed={active}
                 className={`flex h-11 items-center justify-center gap-2 rounded border px-4 text-sm font-medium transition ${
                   active
                     ? "border-ink bg-ink text-white"
@@ -409,7 +411,11 @@ export function PactaraDashboard() {
         </nav>
 
         {message ? (
-          <div className="rounded border border-ink/10 bg-white px-4 py-3 text-sm text-ink/80 shadow-panel">
+          <div
+            className="rounded border border-ink/10 bg-white px-4 py-3 text-sm text-ink/80 shadow-panel"
+            role="status"
+            aria-live="polite"
+          >
             {message}
           </div>
         ) : null}
@@ -3889,8 +3895,13 @@ function ProtocolState({
   }, [status]);
 
   return (
-    <aside className="rounded border border-ink/10 bg-white p-5 shadow-panel">
-      <h2 className="text-lg font-semibold text-ink">Live Protocol State</h2>
+    <aside
+      className="rounded border border-ink/10 bg-white p-5 shadow-panel"
+      aria-labelledby="protocol-state-title"
+    >
+      <h2 id="protocol-state-title" className="text-lg font-semibold text-ink">
+        Live Protocol State
+      </h2>
       <div className="mt-5 space-y-4">
         <StateLine label="Identity" value={identity?.id ?? "not created"} />
         <StateLine label="PACT" value={pact?.id ?? "not created"} />
