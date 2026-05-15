@@ -2635,13 +2635,9 @@ async fn ensure_auth(state: &AppState, headers: &HeaderMap) -> Result<(), ApiErr
         return Ok(());
     }
 
-    let header_authenticated = headers
-        .get("x-pactara-authenticated")
-        .and_then(|value| value.to_str().ok())
-        .is_some_and(|value| value == "true" || value == "1");
-    if header_authenticated {
-        return Ok(());
-    }
+    // SECURITY: Previously we allowed a spoofable header 'x-pactara-authenticated'
+    // to bypass auth. This has been removed to ensure all requests are properly
+    // verified via session tokens or signed requests.
 
     if let Some(token) = headers
         .get("x-pactara-session")
@@ -2652,17 +2648,13 @@ async fn ensure_auth(state: &AppState, headers: &HeaderMap) -> Result<(), ApiErr
         }
     }
 
-    if headers
-        .get("x-pactara-signed-request")
-        .and_then(|value| value.to_str().ok())
-        .is_some_and(|value| value == "true" || value == "1")
-    {
-        Ok(())
-    } else {
-        Err(ApiError::unauthorized(
-            "PACTARA authentication is required in this environment",
-        ))
-    }
+    // SECURITY: Previously we also allowed 'x-pactara-signed-request' header
+    // without verification. This has been removed. Valid signed requests should
+    // be verified using the appropriate cryptographic endpoints or middleware.
+
+    Err(ApiError::unauthorized(
+        "PACTARA authentication is required in this environment",
+    ))
 }
 
 fn evaluate_mandate(mandate: &Mandate, request: MandateCheckRequest) -> MandateCheckResponse {
@@ -2934,5 +2926,26 @@ mod tests {
         );
 
         assert!(!response.allowed);
+    }
+
+    #[tokio::test]
+    async fn ensure_auth_rejects_spoofed_headers() {
+        let db = Db::mock();
+        let state = AppState {
+            db,
+            auth_required: true,
+        };
+
+        let mut headers = HeaderMap::new();
+        headers.insert("x-pactara-authenticated", "true".parse().unwrap());
+
+        let result = ensure_auth(&state, &headers).await;
+        assert!(result.is_err(), "Authentication should NOT be bypassed by spoofed header");
+
+        let mut headers = HeaderMap::new();
+        headers.insert("x-pactara-signed-request", "1".parse().unwrap());
+
+        let result = ensure_auth(&state, &headers).await;
+        assert!(result.is_err(), "Authentication should NOT be bypassed by spoofed signed-request header");
     }
 }
