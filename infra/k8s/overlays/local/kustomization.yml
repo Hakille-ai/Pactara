@@ -1,0 +1,26 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: pactara-local
+
+resources:
+  - ../../base
+
+images:
+  - name: ghcr.io/your-owner/your-repo/pactara-api
+    newName: pactara-api
+    newTag: local
+  - name: ghcr.io/your-owner/your-repo/pactara-web
+    newName: pactara-web
+    newTag: local
+
+configMapGenerator:
+  - name: pactara-config
+    behavior: merge
+    literals:
+      - PACTARA_AUTH_REQUIRED=false
+      - PACTARA_DEV_CUSTODY_ENABLED=true
+      - PACTARA_DEV_SESSIONS_ENABLED=true
+      - PACTARA_CORS_ALLOW_ORIGINS=http://app.pactara.local,http://localhost:3000,http://localhost:3001
+      - RUST_LOG=pactara_api=debug,pactara_db=debug,tower_http=info
+      - NEXT_PUBLIC_PACTARA_API_URL=http://api.pactara.local

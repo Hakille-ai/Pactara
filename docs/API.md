@@ -4,6 +4,62 @@ This document provides a comprehensive list of all available API endpoints for t
 
 ---
 
+## Base URL
+
+Local Docker deployments expose the API at:
+
+```text
+http://localhost:8080
+```
+
+Requests and responses use JSON. Errors return:
+
+```json
+{"error":"message","code":"validation_error","status":400,"request_id":"..."}
+```
+
+When `PACTARA_AUTH_REQUIRED=true`, protected mutation endpoints require:
+
+```text
+x-pactara-session: <session-token>
+```
+
+## Quick PACT Walkthrough
+
+Create an identity:
+
+```bash
+curl -s -X POST http://localhost:8080/v1/identities \
+  -H "content-type: application/json" \
+  -d '{"label":"Alice Operator","kind":"person","public_key":"CLIENT_ED25519_PUBLIC_KEY"}'
+```
+
+Create a draft PACT, replacing `PACTARA_ID` with the identity id:
+
+```bash
+curl -s -X POST http://localhost:8080/v1/pacts \
+  -H "content-type: application/json" \
+  -d '{
+    "actor": "PACTARA_ID",
+    "intent": "trade.sell",
+    "object": {"batch": "cacao-001", "quantity": 10},
+    "target": "pactara:org:buyer-demo",
+    "terms": {"unit": "kg", "price": 120},
+    "consent": {"granted": true, "scope": "demo"},
+    "proof": {"source": "operator"},
+    "expires_at": null
+  }'
+```
+
+Sign and verify the PACT:
+
+```bash
+curl -s -X POST http://localhost:8080/v1/pacts/PACT_UUID/sign \
+  -H "content-type: application/json" \
+  -d '{"public_key":"CLIENT_ED25519_PUBLIC_KEY","hash":"BLAKE3_CANONICAL_HASH","signature":"ED25519_SIGNATURE"}'
+curl -s -X POST http://localhost:8080/v1/pacts/PACT_UUID/verify
+```
+
 ## 🏥 System Health
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
@@ -16,6 +72,7 @@ This document provides a comprehensive list of all available API endpoints for t
 | `POST` | `/v1/identities` | Create a new PACTARA identity. |
 | `GET` | `/v1/identities/:id` | Retrieve identity details. |
 | `GET` | `/v1/identities/:id/did` | Retrieve the W3C DID Document for an identity. |
+| `POST` | `/v1/identities/:id/key` | Confirm a registered public key for an identity. |
 
 ## 📜 PACT Operations
 | Method | Endpoint | Description |
@@ -24,7 +81,7 @@ This document provides a comprehensive list of all available API endpoints for t
 | `GET` | `/v1/pacts/:id` | Retrieve PACT details. |
 | `GET` | `/v1/pacts/:id/bundle` | Export a portable PACT Bundle. |
 | `GET` | `/v1/pacts/:id/timeline` | Retrieve the chronological event log for a PACT. |
-| `POST` | `/v1/pacts/:id/sign` | Sign a PACT (Developer Sandbox). |
+| `POST` | `/v1/pacts/:id/sign` | Activate a PACT from a client-side Ed25519 signature. |
 | `POST` | `/v1/pacts/:id/verify` | Verify PACT integrity, authenticity, and status. |
 | `POST` | `/v1/pacts/:id/revoke` | Revoke an active PACT. |
 | `POST` | `/v1/bundles/verify` | Offline verification of an external PACT Bundle. |
@@ -114,6 +171,9 @@ This document provides a comprehensive list of all available API endpoints for t
 | `GET` | `/v1/ops/agent-runs` | List recent agent runs. |
 | `GET` | `/v1/audit/events` | List high-level audit events. |
 | `GET` | `/v1/events` | List granular protocol events. |
+| `GET` | `/v1/notifications` | List runtime notifications. |
+| `POST` | `/v1/notifications` | Create a runtime notification. |
+| `POST` | `/v1/notifications/:id/read` | Mark a notification as read. |
 
 ## 🌌 World Runtime
 | Method | Endpoint | Description |

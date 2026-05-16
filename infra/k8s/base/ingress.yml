@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: pactara
+spec:
+  rules:
+    - host: api.pactara.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: pactara-api
+                port:
+                  name: http
+    - host: app.pactara.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: pactara-web
+                port:
+                  name: http

@@ -23,10 +23,12 @@ async fn main() -> anyhow::Result<()> {
     let db = Db::connect(&database_url).await?;
     db.migrate().await?;
 
-    let auth_required = env::var("PACTARA_AUTH_REQUIRED")
-        .map(|value| value == "true" || value == "1")
-        .unwrap_or(false);
-    let state = AppState { db, auth_required };
+    let state = AppState::new(
+        db,
+        env_flag("PACTARA_AUTH_REQUIRED", false),
+        env_flag("PACTARA_DEV_CUSTODY_ENABLED", false),
+        env_flag("PACTARA_DEV_SESSIONS_ENABLED", false),
+    );
     let app = build_router(state);
     let addr: SocketAddr = format!("{}:{}", host, port).parse()?;
     let listener = TcpListener::bind(addr).await?;
@@ -35,4 +37,10 @@ async fn main() -> anyhow::Result<()> {
     axum::serve(listener, app).await?;
 
     Ok(())
+}
+
+fn env_flag(key: &str, default: bool) -> bool {
+    env::var(key)
+        .map(|value| matches!(value.as_str(), "true" | "1" | "yes" | "on"))
+        .unwrap_or(default)
 }

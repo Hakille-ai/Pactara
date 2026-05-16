@@ -100,6 +100,14 @@ pub struct CreateIdentityRequest {
     pub label: String,
     #[serde(default)]
     pub kind: IdentityKind,
+    pub public_key: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RegisterIdentityKeyRequest {
+    pub identity_id: PactaraId,
+    pub public_key: String,
+    pub proof_signature: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

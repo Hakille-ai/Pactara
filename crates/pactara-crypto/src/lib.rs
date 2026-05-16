@@ -86,6 +86,10 @@ pub fn verify_value(public_key: &str, signature: &str, value: &Value) -> Result<
     }
 }
 
+pub fn validate_public_key(public_key: &str) -> Result<(), CryptoError> {
+    verifying_key_from_base64(public_key).map(|_| ())
+}
+
 fn canonicalize_object(map: &Map<String, Value>) -> String {
     let mut keys = map.keys().collect::<Vec<_>>();
     keys.sort();

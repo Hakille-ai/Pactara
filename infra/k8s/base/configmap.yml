@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pactara-config
+data:
+  PACTARA_API_HOST: "0.0.0.0"
+  PACTARA_API_PORT: "8080"
+  PACTARA_AUTH_REQUIRED: "true"
+  PACTARA_DEV_CUSTODY_ENABLED: "false"
+  PACTARA_DEV_SESSIONS_ENABLED: "false"
+  PACTARA_CORS_ALLOW_ORIGINS: "https://app.pactara.local"
+  RUST_LOG: "pactara_api=info,pactara_db=info,tower_http=info"
+  NEXT_PUBLIC_PACTARA_API_URL: "https://api.pactara.local"
+  POSTGRES_USER: "pactara"
+  POSTGRES_DB: "pactara"

@@ -52,6 +52,8 @@ PACTARA is built in evolutionary layers, moving from a foundational API to a wor
 *   **[Protocol Specification](docs/protocol-spec/README.md)**: Deep dive into PACT structures and verification rules.
 *   **[Whitepaper](docs/whitepaper/README.md)**: Visionary thesis and strategic roadmap of the protocol.
 *   **[API Reference](docs/API.md)**: Comprehensive endpoint documentation for developers.
+*   **[Architecture Guide](docs/ARCHITECTURE.md)**: Monorepo layout, runtime flow, source of truth, and security model.
+*   **[Development Guide](docs/DEVELOPMENT.md)**: Local setup, environment variables, commands, and verification checks.
 *   **[Contributing Guide](CONTRIBUTING.md)**: Guidelines for contributing to the PACTARA ecosystem.
 
 ---
@@ -62,7 +64,7 @@ PACTARA is implemented as a high-performance Rust monorepo, optimized for safety
 
 *   **Backend**: Axum-based API, SQLx for PostgreSQL, and specialized crates for crypto, ledger, and agent logic.
 *   **Frontend**: A modern Next.js dashboard for real-time mission control and protocol inspection.
-*   **Security**: Ed25519 signatures, BLAKE3 hashes, and canonical JSON payloads.
+*   **Security**: Client-side Ed25519 signatures, BLAKE3 hashes, canonical JSON payloads, strict CORS, and production flags that keep private keys out of the API.
 *   **Deployment**: Fully containerized environment via Docker Compose.
 
 ---
@@ -83,6 +85,8 @@ docker compose up --build
 *   **Mission Control Dashboard**: `http://localhost:3001`
 *   **Protocol API**: `http://localhost:8080`
 *   **Health Check**: `curl http://localhost:8080/health`
+
+The public web entry now focuses on the production MVP flow: create an identity with a browser-generated public key, create a PACT, sign it locally, verify it, export a bundle/QR, and revoke it. Advanced experimental modules remain available from Labs.
 
 ### Development
 To run the full test suite locally:

@@ -1,8 +1,9 @@
 mod validation;
 
 use axum::{
+    extract::DefaultBodyLimit,
     extract::{Path, Query, State},
-    http::{HeaderMap, StatusCode},
+    http::{header::CONTENT_TYPE, HeaderMap, HeaderValue, Method, StatusCode},
     response::sse::{Event, Sse},
     response::{IntoResponse, Response},
     routing::{delete, get, post},
@@ -32,21 +33,29 @@ use pactara_core::{
     LedgerTransferResponse, Mandate, MandateCheckRequest, MandateCheckResponse,
     OperationalOverview, Pact, PactBundle, PactStatus, PasskeyLoginFinishRequest,
     PasskeyLoginStartRequest, PasskeyRegisterFinishRequest, PasskeyRegisterStartRequest,
-    PaymentIntent, PolicyDecision, PolicyEvaluateRequest, PolicyRule, Proof, ReputationResponse,
-    ReviewWorkflowRequest, RevokePactRequest, RunAgentCrewRequest, RunWorldScenarioRequest,
-    RuntimeCommand, RuntimeHealth, RuntimeTimelineItem, ScenarioEdge, ScenarioNode, ScenarioRun,
-    SearchResponse, SignedRequest, SignedRequestVerification, TokenIssuanceEvent,
-    TokenIssuanceResponse, TrustGraph, UpsertLedgerLimitRequest, VerifyPactResponse,
-    WorkflowResponse, WorkflowTemplate, WorldScenario,
+    PaymentIntent, PolicyDecision, PolicyEvaluateRequest, PolicyRule, Proof,
+    RegisterIdentityKeyRequest, ReputationResponse, ReviewWorkflowRequest, RevokePactRequest,
+    RunAgentCrewRequest, RunWorldScenarioRequest, RuntimeCommand, RuntimeHealth,
+    RuntimeTimelineItem, ScenarioEdge, ScenarioNode, ScenarioRun, SearchResponse, SignedRequest,
+    SignedRequestVerification, TokenIssuanceEvent, TokenIssuanceResponse, TrustGraph,
+    UpsertLedgerLimitRequest, VerifyPactResponse, WorkflowResponse, WorkflowTemplate,
+    WorldScenario,
 };
-use pactara_crypto::{generate_key_material, hash_value, sign_value, verify_value};
+use pactara_crypto::{
+    generate_key_material, hash_value, sign_value, validate_public_key, verify_value,
+};
 use pactara_db::{Db, DbError};
 use pactara_domain::action_to_pact_request;
 use pactara_ledger::PACT_ASSET_ID;
 use pactara_verifier::verify_bundle as verify_bundle_portable;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use std::convert::Infallible;
+use std::{
+    collections::HashMap,
+    convert::Infallible,
+    sync::{Arc, Mutex},
+    time::{Duration as StdDuration, Instant},
+};
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use uuid::Uuid;
 use validation::{
@@ -63,6 +72,26 @@ use validation::{
 pub struct AppState {
     pub db: Db,
     pub auth_required: bool,
+    pub dev_custody_enabled: bool,
+    pub dev_sessions_enabled: bool,
+    rate_limiter: Arc<Mutex<HashMap<String, Vec<Instant>>>>,
+}
+
+impl AppState {
+    pub fn new(
+        db: Db,
+        auth_required: bool,
+        dev_custody_enabled: bool,
+        dev_sessions_enabled: bool,
+    ) -> Self {
+        Self {
+            db,
+            auth_required,
+            dev_custody_enabled,
+            dev_sessions_enabled,
+            rate_limiter: Arc::new(Mutex::new(HashMap::new())),
+        }
+    }
 }
 
 pub fn build_router(state: AppState) -> Router {
@@ -72,6 +101,7 @@ pub fn build_router(state: AppState) -> Router {
         .route("/v1/identities", post(create_identity))
         .route("/v1/identities/:id", get(get_identity))
         .route("/v1/identities/:id/did", get(get_identity_did))
+        .route("/v1/identities/:id/key", post(register_identity_key))
         .route("/v1/pacts", post(create_pact))
         .route("/v1/pacts/:id", get(get_pact))
         .route("/v1/pacts/:id/bundle", get(get_pact_bundle))
@@ -173,11 +203,34 @@ pub fn build_router(state: AppState) -> Router {
         .route("/v1/ops/stream", get(ops_stream))
         .route("/v1/audit/events", get(list_audit_events))
         .route("/v1/events", get(list_events))
-        .route("/v1/notifications", get(list_notifications).post(create_notification))
-        .route("/v1/notifications/:id/read", post(mark_notification_as_read))
-        .layer(CorsLayer::permissive())
+        .route(
+            "/v1/notifications",
+            get(list_notifications).post(create_notification),
+        )
+        .route(
+            "/v1/notifications/:id/read",
+            post(mark_notification_as_read),
+        )
+        .layer(DefaultBodyLimit::max(64 * 1024))
+        .layer(cors_layer_from_env())
         .layer(TraceLayer::new_for_http())
         .with_state(state)
+}
+
+fn cors_layer_from_env() -> CorsLayer {
+    let origins = std::env::var("PACTARA_CORS_ALLOW_ORIGINS")
+        .unwrap_or_else(|_| "http://localhost:3000,http://localhost:3001".to_string())
+        .split(',')
+        .filter_map(|origin| origin.trim().parse::<HeaderValue>().ok())
+        .collect::<Vec<_>>();
+
+    CorsLayer::new()
+        .allow_origin(origins)
+        .allow_methods([Method::GET, Method::POST, Method::DELETE, Method::OPTIONS])
+        .allow_headers([
+            CONTENT_TYPE,
+            "x-pactara-session".parse().expect("valid header name"),
+        ])
 }
 
 #[derive(Debug, Serialize)]
@@ -209,15 +262,36 @@ async fn ready(State(state): State<AppState>) -> Result<Json<RuntimeHealth>, Api
     }))
 }
 
+#[derive(Debug, Deserialize)]
+struct SignPactRequest {
+    public_key: String,
+    signature: String,
+    hash: String,
+}
+
 async fn create_identity(
+    headers: HeaderMap,
     State(state): State<AppState>,
     Json(payload): Json<CreateIdentityRequest>,
 ) -> Result<Json<Identity>, ApiError> {
+    enforce_rate_limit(&state, &headers, "identity.create")?;
     if payload.label.trim().is_empty() {
-        return Err(ApiError::bad_request("identity label is required"));
+        return Err(ApiError::validation("identity label is required"));
     }
 
-    let keys = generate_key_material();
+    let generated_keys = if payload.public_key.is_none() && state.dev_custody_enabled {
+        Some(generate_key_material())
+    } else {
+        None
+    };
+    let public_key = payload
+        .public_key
+        .or_else(|| generated_keys.as_ref().map(|keys| keys.public_key.clone()))
+        .ok_or_else(|| {
+            ApiError::validation("public_key is required when PACTARA_DEV_CUSTODY_ENABLED is false")
+        })?;
+    validate_public_key(&public_key)?;
+
     let identity = Identity {
         id: format!(
             "pactara:{}:{}",
@@ -226,8 +300,8 @@ async fn create_identity(
         ),
         label: payload.label.trim().to_string(),
         kind: payload.kind,
-        public_key: keys.public_key,
-        private_key: Some(keys.private_key),
+        public_key,
+        private_key: generated_keys.map(|keys| keys.private_key),
         created_at: Utc::now(),
     };
 
@@ -257,10 +331,34 @@ async fn get_identity_did(
     Ok(Json(DidDocument::from_identity(&identity)))
 }
 
+async fn register_identity_key(
+    headers: HeaderMap,
+    State(state): State<AppState>,
+    Path(id): Path<String>,
+    Json(payload): Json<RegisterIdentityKeyRequest>,
+) -> Result<Json<Identity>, ApiError> {
+    enforce_rate_limit(&state, &headers, "identity.key")?;
+    if payload.identity_id != id {
+        return Err(ApiError::validation(
+            "identity_id in path and body must match",
+        ));
+    }
+    validate_public_key(&payload.public_key)?;
+    let identity = state.db.get_identity(&id).await?;
+    if identity.public_key != payload.public_key {
+        return Err(ApiError::signature_invalid(
+            "registered public_key does not match identity",
+        ));
+    }
+    Ok(Json(identity.without_private_key()))
+}
+
 async fn create_pact(
+    headers: HeaderMap,
     State(state): State<AppState>,
     Json(payload): Json<CreatePactRequest>,
 ) -> Result<Json<Pact>, ApiError> {
+    enforce_rate_limit(&state, &headers, "pact.create")?;
     validate_pact_request(&payload)?;
     state.db.get_identity(&payload.actor).await?;
 
@@ -324,25 +422,44 @@ async fn get_pact_timeline(
 }
 
 async fn sign_pact(
+    headers: HeaderMap,
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
+    Json(payload): Json<SignPactRequest>,
 ) -> Result<Json<Pact>, ApiError> {
+    enforce_rate_limit(&state, &headers, "pact.sign")?;
     let pact = state.db.get_pact(id).await?;
     if pact.status == PactStatus::Revoked {
-        return Err(ApiError::bad_request("revoked PACTs cannot be signed"));
+        return Err(ApiError::pact_revoked("revoked PACTs cannot be signed"));
     }
     if pact.is_expired_at(Utc::now()) {
-        return Err(ApiError::bad_request("expired PACTs cannot be signed"));
+        return Err(ApiError::pact_expired("expired PACTs cannot be signed"));
     }
 
     let actor = state.db.get_identity(&pact.actor).await?;
-    let private_key = actor.private_key.ok_or(DbError::MissingPrivateKey)?;
-    let signed = sign_value(&private_key, &pact.signing_payload())?;
+    if payload.public_key != actor.public_key {
+        return Err(ApiError::signature_invalid(
+            "signature public_key does not match the PACT actor",
+        ));
+    }
+    let expected_hash = hash_value(&pact.signing_payload());
+    if payload.hash != expected_hash {
+        return Err(ApiError::signature_invalid(
+            "PACT hash does not match signing payload",
+        ));
+    }
+    if !verify_value(
+        &payload.public_key,
+        &payload.signature,
+        &pact.signing_payload(),
+    )? {
+        return Err(ApiError::signature_invalid("PACT signature is invalid"));
+    }
 
     Ok(Json(
         state
             .db
-            .sign_pact(pact.id, signed.signature, signed.hash)
+            .sign_pact(pact.id, payload.signature, payload.hash)
             .await?,
     ))
 }
@@ -412,12 +529,14 @@ async fn verify_pact_inner(
 }
 
 async fn revoke_pact(
+    headers: HeaderMap,
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Json(payload): Json<RevokePactRequest>,
 ) -> Result<Json<pactara_core::Revocation>, ApiError> {
+    enforce_rate_limit(&state, &headers, "pact.revoke")?;
     if payload.reason.trim().is_empty() {
-        return Err(ApiError::bad_request("revocation reason is required"));
+        return Err(ApiError::validation("revocation reason is required"));
     }
 
     state.db.get_pact(id).await?;
@@ -782,6 +901,11 @@ async fn create_dev_session(
     State(state): State<AppState>,
     Json(payload): Json<CreateDevSessionRequest>,
 ) -> Result<Json<AuthSession>, ApiError> {
+    if !state.dev_sessions_enabled {
+        return Err(ApiError::unauthorized(
+            "developer sessions are disabled in this environment",
+        ));
+    }
     state.db.get_identity(&payload.identity_id).await?;
     let session = AuthSession {
         id: Uuid::new_v4(),
@@ -1082,6 +1206,11 @@ async fn create_agent(
         state.db.get_identity(&identity_id).await?;
         identity_id
     } else {
+        if !state.dev_custody_enabled {
+            return Err(ApiError::validation(
+                "agent identity_id is required when PACTARA_DEV_CUSTODY_ENABLED is false",
+            ));
+        }
         let keys = generate_key_material();
         let identity = state
             .db
@@ -2576,7 +2705,10 @@ async fn list_notifications(
     Ok(Json(
         state
             .db
-            .list_notifications(query.unread_only.unwrap_or(false), query.limit.unwrap_or(50))
+            .list_notifications(
+                query.unread_only.unwrap_or(false),
+                query.limit.unwrap_or(50),
+            )
             .await?,
     ))
 }
@@ -2624,7 +2756,9 @@ async fn upsert_ledger_limit(
 ) -> Result<Json<LedgerLimit>, ApiError> {
     ensure_auth(&state, &headers).await?;
     if payload.account_id != id {
-        return Err(ApiError::bad_request("account_id in path and body must match"));
+        return Err(ApiError::bad_request(
+            "account_id in path and body must match",
+        ));
     }
     validate_ledger_limit_request(&payload)?;
     Ok(Json(state.db.upsert_ledger_limit(payload).await?))
@@ -2655,6 +2789,34 @@ async fn ensure_auth(state: &AppState, headers: &HeaderMap) -> Result<(), ApiErr
     Err(ApiError::unauthorized(
         "PACTARA authentication is required in this environment",
     ))
+}
+
+fn enforce_rate_limit(state: &AppState, headers: &HeaderMap, action: &str) -> Result<(), ApiError> {
+    let actor = headers
+        .get("x-forwarded-for")
+        .or_else(|| headers.get("x-real-ip"))
+        .or_else(|| headers.get("x-pactara-session"))
+        .and_then(|value| value.to_str().ok())
+        .and_then(|value| value.split(',').next())
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .unwrap_or("anonymous");
+    let key = format!("{}:{}", action, actor);
+    let now = Instant::now();
+    let window = StdDuration::from_secs(60);
+    let mut buckets = state
+        .rate_limiter
+        .lock()
+        .map_err(|_| ApiError::internal("rate limiter is unavailable"))?;
+    let bucket = buckets.entry(key).or_default();
+    bucket.retain(|seen_at| now.duration_since(*seen_at) <= window);
+    if bucket.len() >= 30 {
+        return Err(ApiError::rate_limited(
+            "too many requests; please wait before retrying",
+        ));
+    }
+    bucket.push(now);
+    Ok(())
 }
 
 fn evaluate_mandate(mandate: &Mandate, request: MandateCheckRequest) -> MandateCheckResponse {
@@ -2728,6 +2890,7 @@ fn identity_segment(kind: &IdentityKind) -> &'static str {
 #[derive(Debug)]
 pub struct ApiError {
     status: StatusCode,
+    code: &'static str,
     message: String,
 }
 
@@ -2735,6 +2898,35 @@ impl ApiError {
     fn bad_request(message: impl Into<String>) -> Self {
         Self {
             status: StatusCode::BAD_REQUEST,
+            code: "validation_error",
+            message: message.into(),
+        }
+    }
+
+    fn validation(message: impl Into<String>) -> Self {
+        Self::bad_request(message)
+    }
+
+    fn signature_invalid(message: impl Into<String>) -> Self {
+        Self {
+            status: StatusCode::BAD_REQUEST,
+            code: "signature_invalid",
+            message: message.into(),
+        }
+    }
+
+    fn pact_expired(message: impl Into<String>) -> Self {
+        Self {
+            status: StatusCode::BAD_REQUEST,
+            code: "pact_expired",
+            message: message.into(),
+        }
+    }
+
+    fn pact_revoked(message: impl Into<String>) -> Self {
+        Self {
+            status: StatusCode::BAD_REQUEST,
+            code: "pact_revoked",
             message: message.into(),
         }
     }
@@ -2742,6 +2934,23 @@ impl ApiError {
     fn unauthorized(message: impl Into<String>) -> Self {
         Self {
             status: StatusCode::UNAUTHORIZED,
+            code: "unauthorized",
+            message: message.into(),
+        }
+    }
+
+    fn rate_limited(message: impl Into<String>) -> Self {
+        Self {
+            status: StatusCode::TOO_MANY_REQUESTS,
+            code: "rate_limited",
+            message: message.into(),
+        }
+    }
+
+    fn internal(message: impl Into<String>) -> Self {
+        Self {
+            status: StatusCode::INTERNAL_SERVER_ERROR,
+            code: "internal_error",
             message: message.into(),
         }
     }
@@ -2752,18 +2961,22 @@ impl From<DbError> for ApiError {
         match value {
             DbError::NotFound => Self {
                 status: StatusCode::NOT_FOUND,
+                code: "not_found",
                 message: "record not found".to_string(),
             },
             DbError::MissingPrivateKey => Self {
                 status: StatusCode::CONFLICT,
+                code: "signature_invalid",
                 message: value.to_string(),
             },
             DbError::InvalidOperation(message) => Self {
                 status: StatusCode::BAD_REQUEST,
+                code: "validation_error",
                 message,
             },
             other => Self {
                 status: StatusCode::INTERNAL_SERVER_ERROR,
+                code: "internal_error",
                 message: other.to_string(),
             },
         }
@@ -2774,6 +2987,7 @@ impl From<pactara_crypto::CryptoError> for ApiError {
     fn from(value: pactara_crypto::CryptoError) -> Self {
         Self {
             status: StatusCode::BAD_REQUEST,
+            code: "signature_invalid",
             message: value.to_string(),
         }
     }
@@ -2789,7 +3003,9 @@ impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
         let body = Json(json!({
             "error": self.message,
-            "status": self.status.as_u16()
+            "code": self.code,
+            "status": self.status.as_u16(),
+            "request_id": Uuid::new_v4().to_string()
         }));
         (self.status, body).into_response()
     }
@@ -2931,21 +3147,24 @@ mod tests {
     #[tokio::test]
     async fn ensure_auth_rejects_spoofed_headers() {
         let db = Db::mock();
-        let state = AppState {
-            db,
-            auth_required: true,
-        };
+        let state = AppState::new(db, true, false, false);
 
         let mut headers = HeaderMap::new();
         headers.insert("x-pactara-authenticated", "true".parse().unwrap());
 
         let result = ensure_auth(&state, &headers).await;
-        assert!(result.is_err(), "Authentication should NOT be bypassed by spoofed header");
+        assert!(
+            result.is_err(),
+            "Authentication should NOT be bypassed by spoofed header"
+        );
 
         let mut headers = HeaderMap::new();
         headers.insert("x-pactara-signed-request", "1".parse().unwrap());
 
         let result = ensure_auth(&state, &headers).await;
-        assert!(result.is_err(), "Authentication should NOT be bypassed by spoofed signed-request header");
+        assert!(
+            result.is_err(),
+            "Authentication should NOT be bypassed by spoofed signed-request header"
+        );
     }
 }

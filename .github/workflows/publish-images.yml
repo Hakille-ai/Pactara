@@ -1,0 +1,52 @@
+name: Publish Images
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    name: Build and push GHCR images
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve image namespace
+        shell: bash
+        run: |
+          echo "IMAGE_NAMESPACE=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push API
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: infra/docker/Dockerfile.api
+          push: true
+          tags: |
+            ${{ env.IMAGE_NAMESPACE }}/pactara-api:${{ github.sha }}
+            ${{ env.IMAGE_NAMESPACE }}/pactara-api:latest
+
+      - name: Build and push web
+        uses: docker/build-push-action@v6
+        with:
+          context: apps/web
+          file: apps/web/Dockerfile
+          push: true
+          build-args: |
+            NEXT_PUBLIC_PACTARA_API_URL=https://api.pactara.local
+          tags: |
+            ${{ env.IMAGE_NAMESPACE }}/pactara-web:${{ github.sha }}
+            ${{ env.IMAGE_NAMESPACE }}/pactara-web:latest

@@ -1,0 +1,13 @@
+services:
+  api:
+    environment:
+      PACTARA_AUTH_REQUIRED: "false"
+      PACTARA_DEV_SESSIONS_ENABLED: "true"
+      PACTARA_CORS_ALLOW_ORIGINS: http://localhost:3000,http://localhost:3001
+
+  web:
+    build:
+      args:
+        NEXT_PUBLIC_PACTARA_API_URL: http://localhost:8080
+    environment:
+      NEXT_PUBLIC_PACTARA_API_URL: http://localhost:8080

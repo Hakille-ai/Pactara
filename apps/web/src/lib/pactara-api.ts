@@ -18,6 +18,19 @@ export type Identity = {
   created_at: string;
 };
 
+export type RegisterIdentityKeyRequest = {
+  identity_id: string;
+  public_key: string;
+  proof_signature?: string | null;
+};
+
+export type ApiErrorBody = {
+  error: string;
+  code?: string;
+  status?: number;
+  request_id?: string;
+};
+
 export type PactStatus = "draft" | "active" | "expired" | "revoked" | "invalid";
 
 export type Pact = {
@@ -34,6 +47,12 @@ export type Pact = {
   signature?: string | null;
   hash: string;
   status: PactStatus;
+};
+
+export type SignPactRequest = {
+  public_key: string;
+  signature: string;
+  hash: string;
 };
 
 export type VerifyPactResponse = {
@@ -719,7 +738,9 @@ export async function pactaraFetch<T>(path: string, init?: RequestInit): Promise
   const data = text ? JSON.parse(text) : null;
 
   if (!response.ok) {
-    throw new Error(data?.error ?? `PACTARA API error ${response.status}`);
+    const details = data as ApiErrorBody | null;
+    const request = details?.request_id ? ` (${details.request_id})` : "";
+    throw new Error(details?.error ? `${details.error}${request}` : `PACTARA API error ${response.status}`);
   }
 
   return data as T;

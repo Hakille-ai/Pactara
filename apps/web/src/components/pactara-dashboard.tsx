@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { ComponentType, ReactNode } from "react";
 import QRCode from "qrcode";
 import {
@@ -143,6 +143,35 @@ const views: Array<{ id: View; label: string; icon: ComponentType<{ size?: numbe
   { id: "events", label: "Events", icon: History },
 ];
 
+type DataGroup =
+  | "events"
+  | "proofs"
+  | "genomes"
+  | "mandates"
+  | "network"
+  | "trustGraph"
+  | "domains"
+  | "ledger"
+  | "agents"
+  | "audit"
+  | "payments"
+  | "ops"
+  | "agentRuns"
+  | "workflowTemplates"
+  | "workflows"
+  | "agentTasks"
+  | "policyRules"
+  | "worldScenarios"
+  | "runtimeCommands"
+  | "agentCrews"
+  | "timeline"
+  | "credentials";
+
+type RefreshOptions = {
+  force?: boolean;
+  cancelled?: () => boolean;
+};
+
 export function PactaraDashboard() {
   const [view, setView] = useState<View>("identity");
   const [health, setHealth] = useState<string>("checking");
@@ -206,17 +235,25 @@ export function PactaraDashboard() {
   const [streamSnapshot, setStreamSnapshot] = useState<string>("");
   const [qr, setQr] = useState<string>("");
   const [message, setMessage] = useState<string>("");
+  const loadedGroups = useRef<Set<DataGroup>>(new Set());
 
   const currentPactId = pact?.id ?? verification?.pact_id ?? "";
 
   useEffect(() => {
     void refreshHealth();
-    void refreshEvents();
-    void refreshProtocolObjects();
-    void refreshNetwork();
-    void refreshTrustGraph();
-    void refreshOperatingLayer();
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    void refreshViewData(view, false, () => cancelled);
+    return () => {
+      cancelled = true;
+    };
+  }, [view]);
+
+  useEffect(() => {
+    loadedGroups.current.delete("credentials");
+  }, [identity?.id]);
 
   useEffect(() => {
     async function makeQr() {
@@ -250,95 +287,408 @@ export function PactaraDashboard() {
     }
   }
 
-  async function refreshEvents() {
-    try {
-      setEvents(await pactaraFetch<EventLog[]>("/v1/events?limit=30"));
-    } catch {
-      setEvents([]);
+  function shouldSkip(group: DataGroup, force = true) {
+    return !force && loadedGroups.current.has(group);
+  }
+
+  function markLoaded(group: DataGroup, cancelled?: () => boolean) {
+    if (!cancelled?.()) {
+      loadedGroups.current.add(group);
     }
   }
 
-  async function refreshProtocolObjects() {
-    const [nextProofs, nextGenomes, nextMandates] = await Promise.allSettled([
-      pactaraFetch<Proof[]>("/v1/proofs?limit=20"),
-      pactaraFetch<Genome[]>("/v1/genomes?limit=20"),
-      pactaraFetch<Mandate[]>("/v1/mandates"),
-    ]);
-    setProofs(nextProofs.status === "fulfilled" ? nextProofs.value : []);
-    setGenomes(nextGenomes.status === "fulfilled" ? nextGenomes.value : []);
-    setMandates(nextMandates.status === "fulfilled" ? nextMandates.value : []);
-  }
-
-  async function refreshNetwork() {
+  async function refreshEvents(options: RefreshOptions = {}) {
+    const { force = true, cancelled } = options;
+    if (shouldSkip("events", force)) return;
     try {
-      setNetwork(await pactaraFetch<NetworkStatus>("/v1/network/status"));
+      const nextEvents = await pactaraFetch<EventLog[]>("/v1/events?limit=30");
+      if (cancelled?.()) return;
+      setEvents(nextEvents);
+      markLoaded("events", cancelled);
     } catch {
-      setNetwork(null);
+      if (!cancelled?.()) setEvents([]);
     }
   }
 
-  async function refreshTrustGraph() {
+  async function refreshProofsData(options: RefreshOptions = {}) {
+    const { force = true, cancelled } = options;
+    if (shouldSkip("proofs", force)) return;
     try {
-      setTrustGraph(await pactaraFetch<TrustGraph>("/v1/graph/trust?limit=80"));
+      const nextProofs = await pactaraFetch<Proof[]>("/v1/proofs?limit=20");
+      if (cancelled?.()) return;
+      setProofs(nextProofs);
+      markLoaded("proofs", cancelled);
     } catch {
-      setTrustGraph(null);
+      if (!cancelled?.()) setProofs([]);
     }
   }
 
-  async function refreshOperatingLayer() {
-    const [
-      nextDomains,
-      nextAccounts,
-      nextAgents,
-      nextAudit,
-      nextPayments,
-      nextOps,
-      nextAgentRuns,
-      nextAssets,
-      nextWorkflowTemplates,
-      nextWorkflows,
-      nextAgentTasks,
-      nextPolicyRules,
-      nextWorldScenarios,
-      nextRuntimeCommands,
-      nextAgentCrews,
-      nextTimelineItems,
-    ] = await Promise.allSettled([
-      pactaraFetch<DomainModule[]>("/v1/domains"),
+  async function refreshGenomesData(options: RefreshOptions = {}) {
+    const { force = true, cancelled } = options;
+    if (shouldSkip("genomes", force)) return;
+    try {
+      const nextGenomes = await pactaraFetch<Genome[]>("/v1/genomes?limit=20");
+      if (cancelled?.()) return;
+      setGenomes(nextGenomes);
+      markLoaded("genomes", cancelled);
+    } catch {
+      if (!cancelled?.()) setGenomes([]);
+    }
+  }
+
+  async function refreshMandatesData(options: RefreshOptions = {}) {
+    const { force = true, cancelled } = options;
+    if (shouldSkip("mandates", force)) return;
+    try {
+      const nextMandates = await pactaraFetch<Mandate[]>("/v1/mandates");
+      if (cancelled?.()) return;
+      setMandates(nextMandates);
+      markLoaded("mandates", cancelled);
+    } catch {
+      if (!cancelled?.()) setMandates([]);
+    }
+  }
+
+  async function refreshNetwork(options: RefreshOptions = {}) {
+    const { force = true, cancelled } = options;
+    if (shouldSkip("network", force)) return;
+    try {
+      const nextNetwork = await pactaraFetch<NetworkStatus>("/v1/network/status");
+      if (cancelled?.()) return;
+      setNetwork(nextNetwork);
+      markLoaded("network", cancelled);
+    } catch {
+      if (!cancelled?.()) setNetwork(null);
+    }
+  }
+
+  async function refreshTrustGraph(options: RefreshOptions = {}) {
+    const { force = true, cancelled } = options;
+    if (shouldSkip("trustGraph", force)) return;
+    try {
+      const nextGraph = await pactaraFetch<TrustGraph>("/v1/graph/trust?limit=80");
+      if (cancelled?.()) return;
+      setTrustGraph(nextGraph);
+      markLoaded("trustGraph", cancelled);
+    } catch {
+      if (!cancelled?.()) setTrustGraph(null);
+    }
+  }
+
+  async function refreshDomainsData(options: RefreshOptions = {}) {
+    const { force = true, cancelled } = options;
+    if (shouldSkip("domains", force)) return;
+    try {
+      const nextDomains = await pactaraFetch<DomainModule[]>("/v1/domains");
+      if (cancelled?.()) return;
+      setDomains(nextDomains);
+      markLoaded("domains", cancelled);
+    } catch {
+      if (!cancelled?.()) setDomains([]);
+    }
+  }
+
+  async function refreshLedgerData(options: RefreshOptions = {}) {
+    const { force = true, cancelled } = options;
+    if (shouldSkip("ledger", force)) return;
+    const [nextAccounts, nextAssets] = await Promise.allSettled([
       pactaraFetch<LedgerAccount[]>("/v1/ledger/accounts?limit=30"),
-      pactaraFetch<AgentProfile[]>("/v1/agents"),
-      pactaraFetch<AuditEvent[]>("/v1/audit/events?limit=30"),
-      pactaraFetch<PaymentIntent[]>("/v1/payments/intents?limit=30"),
-      pactaraFetch<OperationalOverview>("/v1/ops/overview"),
-      pactaraFetch<AgentRun[]>("/v1/ops/agent-runs?limit=30"),
       pactaraFetch<LedgerAsset[]>("/v1/ledger/assets"),
-      pactaraFetch<WorkflowTemplate[]>("/v1/workflows/templates"),
-      pactaraFetch<DomainWorkflow[]>("/v1/workflows?limit=30"),
-      pactaraFetch<AgentTask[]>("/v1/agent-tasks?limit=30"),
-      pactaraFetch<PolicyRule[]>("/v1/policies/rules?limit=30"),
-      pactaraFetch<WorldScenario[]>("/v1/world/scenarios?limit=30"),
-      pactaraFetch<RuntimeCommand[]>("/v1/runtime/commands?limit=30"),
-      pactaraFetch<AgentCrewResponse[]>("/v1/agent-crews?limit=30"),
-      pactaraFetch<RuntimeTimelineItem[]>("/v1/runtime/timeline?limit=80"),
     ]);
-    setDomains(nextDomains.status === "fulfilled" ? nextDomains.value : []);
+    if (cancelled?.()) return;
     setLedgerAccounts(nextAccounts.status === "fulfilled" ? nextAccounts.value : []);
-    setAgents(nextAgents.status === "fulfilled" ? nextAgents.value : []);
-    setAuditEvents(nextAudit.status === "fulfilled" ? nextAudit.value : []);
-    setPayments(nextPayments.status === "fulfilled" ? nextPayments.value : []);
-    setOpsOverview(nextOps.status === "fulfilled" ? nextOps.value : null);
-    setAgentRuns(nextAgentRuns.status === "fulfilled" ? nextAgentRuns.value : []);
     setLedgerAssets(nextAssets.status === "fulfilled" ? nextAssets.value : []);
-    setWorkflowTemplates(
-      nextWorkflowTemplates.status === "fulfilled" ? nextWorkflowTemplates.value : []
-    );
-    setWorkflows(nextWorkflows.status === "fulfilled" ? nextWorkflows.value : []);
-    setAgentTasks(nextAgentTasks.status === "fulfilled" ? nextAgentTasks.value : []);
-    setPolicyRules(nextPolicyRules.status === "fulfilled" ? nextPolicyRules.value : []);
-    setWorldScenarios(nextWorldScenarios.status === "fulfilled" ? nextWorldScenarios.value : []);
-    setRuntimeCommands(nextRuntimeCommands.status === "fulfilled" ? nextRuntimeCommands.value : []);
-    setAgentCrews(nextAgentCrews.status === "fulfilled" ? nextAgentCrews.value : []);
-    setTimelineItems(nextTimelineItems.status === "fulfilled" ? nextTimelineItems.value : []);
+    markLoaded("ledger", cancelled);
+  }
+
+  async function refreshAgentsData(options: RefreshOptions = {}) {
+    const { force = true, cancelled } = options;
+    if (shouldSkip("agents", force)) return;
+    try {
+      const nextAgents = await pactaraFetch<AgentProfile[]>("/v1/agents");
+      if (cancelled?.()) return;
+      setAgents(nextAgents);
+      markLoaded("agents", cancelled);
+    } catch {
+      if (!cancelled?.()) setAgents([]);
+    }
+  }
+
+  async function refreshAuditData(options: RefreshOptions = {}) {
+    const { force = true, cancelled } = options;
+    if (shouldSkip("audit", force)) return;
+    try {
+      const nextAudit = await pactaraFetch<AuditEvent[]>("/v1/audit/events?limit=30");
+      if (cancelled?.()) return;
+      setAuditEvents(nextAudit);
+      markLoaded("audit", cancelled);
+    } catch {
+      if (!cancelled?.()) setAuditEvents([]);
+    }
+  }
+
+  async function refreshPaymentsData(options: RefreshOptions = {}) {
+    const { force = true, cancelled } = options;
+    if (shouldSkip("payments", force)) return;
+    try {
+      const nextPayments = await pactaraFetch<PaymentIntent[]>("/v1/payments/intents?limit=30");
+      if (cancelled?.()) return;
+      setPayments(nextPayments);
+      markLoaded("payments", cancelled);
+    } catch {
+      if (!cancelled?.()) setPayments([]);
+    }
+  }
+
+  async function refreshOpsOverviewData(options: RefreshOptions = {}) {
+    const { force = true, cancelled } = options;
+    if (shouldSkip("ops", force)) return;
+    try {
+      const nextOps = await pactaraFetch<OperationalOverview>("/v1/ops/overview");
+      if (cancelled?.()) return;
+      setOpsOverview(nextOps);
+      markLoaded("ops", cancelled);
+    } catch {
+      if (!cancelled?.()) setOpsOverview(null);
+    }
+  }
+
+  async function refreshAgentRunsData(options: RefreshOptions = {}) {
+    const { force = true, cancelled } = options;
+    if (shouldSkip("agentRuns", force)) return;
+    try {
+      const nextAgentRuns = await pactaraFetch<AgentRun[]>("/v1/ops/agent-runs?limit=30");
+      if (cancelled?.()) return;
+      setAgentRuns(nextAgentRuns);
+      markLoaded("agentRuns", cancelled);
+    } catch {
+      if (!cancelled?.()) setAgentRuns([]);
+    }
+  }
+
+  async function refreshWorkflowTemplatesData(options: RefreshOptions = {}) {
+    const { force = true, cancelled } = options;
+    if (shouldSkip("workflowTemplates", force)) return;
+    try {
+      const nextTemplates = await pactaraFetch<WorkflowTemplate[]>("/v1/workflows/templates");
+      if (cancelled?.()) return;
+      setWorkflowTemplates(nextTemplates);
+      markLoaded("workflowTemplates", cancelled);
+    } catch {
+      if (!cancelled?.()) setWorkflowTemplates([]);
+    }
+  }
+
+  async function refreshWorkflowsData(options: RefreshOptions = {}) {
+    const { force = true, cancelled } = options;
+    if (shouldSkip("workflows", force)) return;
+    try {
+      const nextWorkflows = await pactaraFetch<DomainWorkflow[]>("/v1/workflows?limit=30");
+      if (cancelled?.()) return;
+      setWorkflows(nextWorkflows);
+      markLoaded("workflows", cancelled);
+    } catch {
+      if (!cancelled?.()) setWorkflows([]);
+    }
+  }
+
+  async function refreshAgentTasksData(options: RefreshOptions = {}) {
+    const { force = true, cancelled } = options;
+    if (shouldSkip("agentTasks", force)) return;
+    try {
+      const nextAgentTasks = await pactaraFetch<AgentTask[]>("/v1/agent-tasks?limit=30");
+      if (cancelled?.()) return;
+      setAgentTasks(nextAgentTasks);
+      markLoaded("agentTasks", cancelled);
+    } catch {
+      if (!cancelled?.()) setAgentTasks([]);
+    }
+  }
+
+  async function refreshPolicyRulesData(options: RefreshOptions = {}) {
+    const { force = true, cancelled } = options;
+    if (shouldSkip("policyRules", force)) return;
+    try {
+      const nextPolicyRules = await pactaraFetch<PolicyRule[]>("/v1/policies/rules?limit=30");
+      if (cancelled?.()) return;
+      setPolicyRules(nextPolicyRules);
+      markLoaded("policyRules", cancelled);
+    } catch {
+      if (!cancelled?.()) setPolicyRules([]);
+    }
+  }
+
+  async function refreshWorldScenariosData(options: RefreshOptions = {}) {
+    const { force = true, cancelled } = options;
+    if (shouldSkip("worldScenarios", force)) return;
+    try {
+      const nextWorldScenarios = await pactaraFetch<WorldScenario[]>("/v1/world/scenarios?limit=30");
+      if (cancelled?.()) return;
+      setWorldScenarios(nextWorldScenarios);
+      markLoaded("worldScenarios", cancelled);
+    } catch {
+      if (!cancelled?.()) setWorldScenarios([]);
+    }
+  }
+
+  async function refreshRuntimeCommandsData(options: RefreshOptions = {}) {
+    const { force = true, cancelled } = options;
+    if (shouldSkip("runtimeCommands", force)) return;
+    try {
+      const nextRuntimeCommands = await pactaraFetch<RuntimeCommand[]>("/v1/runtime/commands?limit=30");
+      if (cancelled?.()) return;
+      setRuntimeCommands(nextRuntimeCommands);
+      markLoaded("runtimeCommands", cancelled);
+    } catch {
+      if (!cancelled?.()) setRuntimeCommands([]);
+    }
+  }
+
+  async function refreshAgentCrewsData(options: RefreshOptions = {}) {
+    const { force = true, cancelled } = options;
+    if (shouldSkip("agentCrews", force)) return;
+    try {
+      const nextAgentCrews = await pactaraFetch<AgentCrewResponse[]>("/v1/agent-crews?limit=30");
+      if (cancelled?.()) return;
+      setAgentCrews(nextAgentCrews);
+      markLoaded("agentCrews", cancelled);
+    } catch {
+      if (!cancelled?.()) setAgentCrews([]);
+    }
+  }
+
+  async function refreshTimelineData(options: RefreshOptions = {}) {
+    const { force = true, cancelled } = options;
+    if (shouldSkip("timeline", force)) return;
+    try {
+      const nextTimelineItems = await pactaraFetch<RuntimeTimelineItem[]>("/v1/runtime/timeline?limit=80");
+      if (cancelled?.()) return;
+      setTimelineItems(nextTimelineItems);
+      markLoaded("timeline", cancelled);
+    } catch {
+      if (!cancelled?.()) setTimelineItems([]);
+    }
+  }
+
+  async function refreshCredentialsData(options: RefreshOptions = {}) {
+    const { force = true, cancelled } = options;
+    if (shouldSkip("credentials", force)) return;
+    try {
+      const loadedCredentials = await pactaraFetch<Credential[]>(
+        `/v1/auth/credentials${identity?.id ? `?identity=${encodeURIComponent(identity.id)}` : ""}`
+      );
+      if (cancelled?.()) return;
+      setCredentials(loadedCredentials);
+      markLoaded("credentials", cancelled);
+    } catch {
+      if (!cancelled?.()) setCredentials([]);
+    }
+  }
+
+  async function refreshOperatingLayer(options: RefreshOptions = {}) {
+    await refreshOpsOverviewData(options);
+  }
+
+  async function refreshViewData(
+    nextView: View,
+    force = false,
+    cancelled?: () => boolean
+  ) {
+    const options = { force, cancelled };
+    switch (nextView) {
+      case "proof":
+        await refreshProofsData(options);
+        break;
+      case "genome":
+        await refreshGenomesData(options);
+        break;
+      case "mandate":
+      case "authority":
+        await refreshMandatesData(options);
+        break;
+      case "events":
+        await refreshEvents(options);
+        break;
+      case "network":
+        await refreshNetwork(options);
+        break;
+      case "graph":
+        await refreshTrustGraph(options);
+        break;
+      case "ops":
+      case "runtime":
+        await refreshOpsOverviewData(options);
+        break;
+      case "world":
+        await Promise.allSettled([
+          refreshDomainsData(options),
+          refreshWorldScenariosData(options),
+        ]);
+        break;
+      case "command":
+        await Promise.allSettled([
+          refreshDomainsData(options),
+          refreshRuntimeCommandsData(options),
+        ]);
+        break;
+      case "crews":
+        await Promise.allSettled([
+          refreshAgentsData(options),
+          refreshMandatesData(options),
+          refreshAgentCrewsData(options),
+        ]);
+        break;
+      case "timeline":
+        await refreshTimelineData(options);
+        break;
+      case "domains":
+        await refreshDomainsData(options);
+        break;
+      case "workflows":
+        await Promise.allSettled([
+          refreshDomainsData(options),
+          refreshWorkflowTemplatesData(options),
+          refreshWorkflowsData(options),
+        ]);
+        break;
+      case "ledger":
+        await refreshLedgerData(options);
+        break;
+      case "payments":
+        await Promise.allSettled([
+          refreshLedgerData(options),
+          refreshPaymentsData(options),
+        ]);
+        break;
+      case "agents":
+        await Promise.allSettled([
+          refreshAgentsData(options),
+          refreshMandatesData(options),
+          refreshAgentRunsData(options),
+          refreshAgentTasksData(options),
+        ]);
+        break;
+      case "policy":
+        await refreshPolicyRulesData(options);
+        break;
+      case "security":
+        await Promise.allSettled([
+          refreshAuditData(options),
+          refreshCredentialsData(options),
+        ]);
+        break;
+      case "identity":
+      case "pact":
+      case "verify":
+      case "offline":
+      case "did":
+      case "bundle":
+      case "reputation":
+      case "search":
+      case "stream":
+      case "qr":
+        break;
+    }
   }
 
   async function runAction<T>(action: () => Promise<T>, success: string) {
@@ -346,10 +696,7 @@ export function PactaraDashboard() {
       setMessage("Working...");
       const result = await action();
       setMessage(success);
-      await refreshEvents();
-      await refreshNetwork();
-      await refreshTrustGraph();
-      await refreshOperatingLayer();
+      await refreshViewData(view, true);
       return result;
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Unknown error");

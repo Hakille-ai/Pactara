@@ -2,6 +2,7 @@ FROM rust:1.88-slim AS builder
 
 WORKDIR /app
 COPY Cargo.toml ./
+COPY Cargo.lock ./
 COPY crates ./crates
 COPY migrations ./migrations
 
@@ -10,11 +11,14 @@ RUN cargo build --release -p pactara-api
 FROM debian:bookworm-slim AS runtime
 
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends ca-certificates \
-  && rm -rf /var/lib/apt/lists/*
+  && apt-get install -y --no-install-recommends ca-certificates curl \
+  && rm -rf /var/lib/apt/lists/* \
+  && useradd --create-home --shell /usr/sbin/nologin pactara
 
 WORKDIR /app
 COPY --from=builder /app/target/release/pactara-api /usr/local/bin/pactara-api
 
 EXPOSE 8080
+USER pactara
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 CMD curl -fsS http://127.0.0.1:8080/ready || exit 1
 CMD ["pactara-api"]
