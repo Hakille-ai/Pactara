@@ -3,19 +3,19 @@ import { SidebarProvider } from "@/components/ui/sidebar"
 import { AppSidebar } from "./AppSidebar"
 import { AppHeader } from "./AppHeader"
 import { useAppStore } from "@/store/useAppStore"
-import { pactaraFetch } from "@/lib/pactara-api"
+import { pactaraFetch, API_BASE } from "@/lib/pactara-api"
 import type { RuntimeHealth } from "@/lib/pactara-api"
-import { Toaster } from "sonner"
+import { Toaster, toast } from "sonner"
 import { AmbientBackground } from "@/components/shared/AmbientBackground"
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
-  const { setHealth, setRuntimeHealth } = useAppStore()
+  const { setHealth, setRuntimeHealth, message } = useAppStore()
 
   const refreshHealth = async () => {
     try {
       const data = await pactaraFetch<{ status: string }>("/health")
       setHealth(data.status)
-    } catch (error) {
+    } catch {
       setHealth("offline")
     }
     try {
@@ -27,8 +27,17 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     void refreshHealth()
-    // Optional: add interval polling here if needed
   }, [])
+
+  // Show toast whenever message changes
+  useEffect(() => {
+    if (!message || message === "Working...") return
+    if (message.toLowerCase().includes("error") || message.toLowerCase().includes("fail") || message.toLowerCase().includes("pactara")) {
+      toast.error("Error", { description: message })
+    } else {
+      toast.success("Success", { description: message })
+    }
+  }, [message])
 
   return (
     <SidebarProvider defaultOpen>
@@ -42,9 +51,21 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               {children}
             </div>
           </main>
+
+          {/* Global Status Bar */}
+          {message && (
+            <div className="border-t border-white/5 bg-black/40 backdrop-blur-xl px-4 py-2 text-xs text-white/50 flex items-center gap-2">
+              <div className={`h-1.5 w-1.5 rounded-full ${
+                message === "Working..." ? "bg-amber-500 animate-pulse" :
+                message.toLowerCase().includes("error") ? "bg-red-500" : "bg-emerald-500"
+              }`} />
+              <span className="truncate">{message}</span>
+              <span className="text-white/20 ml-auto shrink-0">{API_BASE}</span>
+            </div>
+          )}
         </div>
       </div>
-      <Toaster position="bottom-right" theme="system" />
+      <Toaster position="bottom-right" theme="dark" richColors />
     </SidebarProvider>
   )
 }

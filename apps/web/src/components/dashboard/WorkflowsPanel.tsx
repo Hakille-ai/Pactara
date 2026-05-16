@@ -2,7 +2,7 @@ import { useState, useEffect } from "react"
 import { useAppStore } from "@/store/useAppStore"
 import { useAction } from "@/hooks/useAction"
 import { pactaraFetch } from "@/lib/pactara-api"
-import type { WorkflowResponse } from "@/lib/pactara-api"
+import type { WorkflowResponse, WorkflowTemplate } from "@/lib/pactara-api"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { FileCheck2, SquarePen, RefreshCw, BadgeCheck, XCircle } from "lucide-react"
 import { JsonBlock } from "@/components/shared/JsonBlock"
+import { toast } from "sonner"
 
 export function WorkflowsPanel() {
   const { 
@@ -122,13 +123,45 @@ export function WorkflowsPanel() {
     }
   }
 
+  async function refreshWorkflows() {
+    const loaded = await runAction(
+      () => pactaraFetch<WorkflowResponse[]>("/v1/workflows?limit=20"),
+      "Workflow list refreshed."
+    )
+    if (loaded) {
+      setWorkflows(loaded.map(r => r.workflow))
+      if (loaded[0]) setSelectedWorkflow(loaded[0].workflow.id)
+    }
+  }
+
+  async function refreshTemplates() {
+    const loaded = await runAction(
+      () => pactaraFetch<WorkflowTemplate[]>("/v1/workflows/templates"),
+      "Workflow templates refreshed."
+    )
+    if (loaded) {
+      // Assuming setWorkflowTemplates exists in store
+      useAppStore.getState().setWorkflowTemplates(loaded)
+    }
+  }
+
   return (
     <div className="flex flex-col gap-6 w-full max-w-5xl animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Workflows</h1>
-        <p className="text-muted-foreground mt-2">
-          Manage domain workflows, templates, and execution steps.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Workflows</h1>
+          <p className="text-muted-foreground mt-2">
+            Manage domain workflows, templates, and execution steps.
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button onClick={() => void refreshTemplates()} variant="secondary" size="sm" className="bg-white/5 hover:bg-white/10 text-white border-none">
+            <RefreshCw className="mr-2 h-3 w-3" /> Templates
+          </Button>
+          <Button onClick={() => void refreshWorkflows()} variant="secondary" size="sm" className="bg-white/10 hover:bg-white/20 text-white border-none">
+            <RefreshCw className="mr-2 h-3 w-3" /> Workflows
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -172,11 +205,12 @@ export function WorkflowsPanel() {
           <div className="grid gap-6 sm:grid-cols-2 mb-6">
             <div className="space-y-2">
               <Label className="text-white/70">Template</Label>
-              <Select value={templateId} onValueChange={(v) => setTemplateId(v || "")}>
+              <Select value={templateId || "_none"} onValueChange={(v) => setTemplateId(v === "_none" || !v ? "" : v)}>
                 <SelectTrigger className="glass-input">
                   <SelectValue placeholder="Select template" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="_none">Select Template</SelectItem>
                   {domainTemplates.map(t => (
                     <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>
                   ))}
@@ -197,7 +231,7 @@ export function WorkflowsPanel() {
             </div>
             <div className="space-y-2">
               <Label className="text-white/70">Risk</Label>
-              <Select value={risk} onValueChange={(v) => setRisk(v || "")}>
+              <Select value={risk || "medium"} onValueChange={(v) => setRisk(v || "medium")}>
                 <SelectTrigger className="glass-input">
                   <SelectValue />
                 </SelectTrigger>
@@ -211,11 +245,12 @@ export function WorkflowsPanel() {
             </div>
             <div className="space-y-2">
               <Label className="text-white/70">Existing Workflow</Label>
-              <Select value={selectedWorkflow} onValueChange={(v) => setSelectedWorkflow(v || "")}>
+              <Select value={selectedWorkflow || "_none"} onValueChange={(v) => setSelectedWorkflow(v === "_none" || !v ? "" : v)}>
                 <SelectTrigger className="glass-input">
                   <SelectValue placeholder="Select workflow" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="_none">Select Workflow</SelectItem>
                   {workflows.map(w => (
                     <SelectItem key={w.id} value={w.id}>{w.title} ({w.status})</SelectItem>
                   ))}

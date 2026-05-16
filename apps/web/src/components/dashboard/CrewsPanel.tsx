@@ -50,11 +50,23 @@ export function CrewsPanel() {
     if (run) setCrewRun(run)
   }
 
+  async function refreshCrews() {
+    await runAction(
+      () => pactaraFetch<AgentCrewResponse[]>("/v1/agent-crews?limit=20"),
+      "Crew list refreshed."
+    )
+  }
+
   return (
     <div className="flex flex-col gap-6 w-full max-w-5xl animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Supervised Agent Crews</h1>
-        <p className="text-muted-foreground mt-2">Assemble multi-agent teams under mandated authority for complex operations.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Supervised Agent Crews</h1>
+          <p className="text-muted-foreground mt-2">Assemble multi-agent teams under mandated authority for complex operations.</p>
+        </div>
+        <Button onClick={() => void refreshCrews()} variant="secondary" className="bg-white/10 hover:bg-white/20 text-white border-none">
+          <Activity className="mr-2 h-4 w-4" /> Refresh
+        </Button>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
@@ -74,19 +86,25 @@ export function CrewsPanel() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label className="text-white/70">Agent</Label>
-                <Select value={agentId} onValueChange={(v) => setAgentId(v || "")}><SelectTrigger className="glass-input"><SelectValue placeholder="Select agent" /></SelectTrigger>
-                  <SelectContent>{agents.map(a => <SelectItem key={a.id} value={a.id}>{a.label}</SelectItem>)}</SelectContent>
+                <Select value={agentId || "_none"} onValueChange={(v) => setAgentId(v === "_none" || !v ? "" : v)}><SelectTrigger className="glass-input"><SelectValue placeholder="Select agent" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="_none">Select Agent</SelectItem>
+                    {agents.map(a => <SelectItem key={a.id} value={a.id}>{a.label}</SelectItem>)}
+                  </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
                 <Label className="text-white/70">Mandate</Label>
-                <Select value={mandateId} onValueChange={(v) => setMandateId(v || "")}><SelectTrigger className="glass-input"><SelectValue placeholder="Select mandate" /></SelectTrigger>
-                  <SelectContent>{mandates.map(m => <SelectItem key={m.id} value={m.id}>{m.id.slice(0, 12)}...</SelectItem>)}</SelectContent>
+                <Select value={mandateId || "_none"} onValueChange={(v) => setMandateId(v === "_none" || !v ? "" : v)}><SelectTrigger className="glass-input"><SelectValue placeholder="Select mandate" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="_none">Select Mandate</SelectItem>
+                    {mandates.map(m => <SelectItem key={m.id} value={m.id}>{m.id.slice(0, 12)}...</SelectItem>)}
+                  </SelectContent>
                 </Select>
               </div>
             </div>
             <div className="flex gap-3 mt-4">
-              <Button onClick={() => void createCrew()} disabled={!identity || !agentId || !mandateId} className="flex-1 bg-violet-500 hover:bg-violet-600 text-white border-none"><Bot className="mr-2 h-4 w-4" /> Create Crew</Button>
+              <Button onClick={() => void createCrew()} disabled={!identity || !agentId || agentId === "_none" || !mandateId || mandateId === "_none"} className="flex-1 bg-violet-500 hover:bg-violet-600 text-white border-none"><Bot className="mr-2 h-4 w-4" /> Create Crew</Button>
               <Button onClick={() => void runCrew()} disabled={!activeCrewId} className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white border-none"><Activity className="mr-2 h-4 w-4" /> Run</Button>
             </div>
           </CardContent>

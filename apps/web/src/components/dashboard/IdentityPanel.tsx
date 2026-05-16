@@ -39,13 +39,37 @@ export function IdentityPanel() {
     setIsLoading(false)
   }
 
+  async function syncIdentity() {
+    setIsLoading(true)
+    const loaded = await runAction(
+      () => pactaraFetch<Identity[]>("/v1/identities?limit=1"),
+      "Identity synced from network."
+    )
+    if (loaded && loaded[0]) {
+      setIdentity(loaded[0])
+      toast.success("Identity Synced", {
+        description: `Found identity: ${loaded[0].label}`,
+      })
+    } else {
+      toast.info("No Identity Found", {
+        description: "No identities registered on the local node.",
+      })
+    }
+    setIsLoading(false)
+  }
+
   return (
     <div className="flex flex-col gap-6 w-full max-w-4xl animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Identity Management</h1>
-        <p className="text-muted-foreground mt-2">
-          Create and manage your sovereign identities on the PACTARA protocol.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Identity Management</h1>
+          <p className="text-muted-foreground mt-2">
+            Create and manage your sovereign identities on the PACTARA protocol.
+          </p>
+        </div>
+        <Button onClick={() => void syncIdentity()} variant="secondary" className="bg-white/10 hover:bg-white/20 text-white border-none">
+          <Fingerprint className="mr-2 h-4 w-4" /> Sync
+        </Button>
       </div>
 
       <Card className="glass-panel overflow-hidden">

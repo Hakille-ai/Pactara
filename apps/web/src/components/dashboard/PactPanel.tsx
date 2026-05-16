@@ -52,13 +52,37 @@ export function PactPanel() {
     setIsLoading(false)
   }
 
+  async function syncPacts() {
+    setIsLoading(true)
+    const loaded = await runAction(
+      () => pactaraFetch<Pact[]>("/v1/pacts?limit=1"),
+      "PACT synced from network."
+    )
+    if (loaded && loaded[0]) {
+      setPact(loaded[0])
+      toast.success("PACT Synced", {
+        description: `Found PACT: ${loaded[0].id.slice(0, 8)}...`,
+      })
+    } else {
+      toast.info("No PACT Found", {
+        description: "No PACTs registered on the local node.",
+      })
+    }
+    setIsLoading(false)
+  }
+
   return (
     <div className="flex flex-col gap-6 w-full max-w-4xl animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">PACT Creation</h1>
-        <p className="text-muted-foreground mt-2">
-          Define intents, targets, and proofs for your universal agreements.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">PACT Creation</h1>
+          <p className="text-muted-foreground mt-2">
+            Define intents, targets, and proofs for your universal agreements.
+          </p>
+        </div>
+        <Button onClick={() => void syncPacts()} variant="secondary" className="bg-white/10 hover:bg-white/20 text-white border-none">
+          <SquarePen className="mr-2 h-4 w-4" /> Sync
+        </Button>
       </div>
 
       <Card className="glass-panel overflow-hidden">
@@ -130,7 +154,13 @@ export function PactPanel() {
 
           {pact && (
             <div className="mt-8 space-y-3 animate-in fade-in slide-in-from-bottom-2">
-              <h3 className="text-sm font-medium text-muted-foreground">Draft PACT</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-medium text-muted-foreground">Draft PACT</h3>
+                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                  pact.status === 'active' ? 'bg-emerald-500/10 text-emerald-500' : 
+                  pact.status === 'draft' ? 'bg-amber-500/10 text-amber-500' : 'bg-white/10 text-white/50'
+                }`}>{pact.status}</span>
+              </div>
               <JsonBlock value={pact} />
             </div>
           )}

@@ -39,7 +39,7 @@
     --input: 0 0% 12%;
     --ring: 0 0% 20%;
     
-    --radius: 0.75rem;
+    --radius: 0.5rem;
     
     /* Sidebar tailored for dark mode glassmorphism */
     --sidebar-background: 0 0% 4%;
@@ -91,9 +91,13 @@
 
 /* Glassmorphism utilities */
 .glass-panel {
-  @apply bg-white/[0.02] backdrop-blur-3xl border border-white/[0.05] shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] transition-all duration-500 hover:bg-white/[0.03] hover:border-white/[0.08] hover:shadow-[0_8px_32px_0_rgba(0,0,0,0.5)];
+  @apply bg-white/[0.025] backdrop-blur-2xl border border-white/[0.07] shadow-[0_16px_48px_rgba(0,0,0,0.34)] transition-all duration-300 hover:bg-white/[0.04] hover:border-white/[0.1];
 }
 
 .glass-input {
   @apply bg-black/20 border-white/10 focus-visible:ring-1 focus-visible:ring-white/30 focus-visible:border-white/20 transition-all text-white placeholder:text-white/30;
+}
+
+.protocol-band {
+  @apply rounded-lg border border-white/[0.07] bg-black/25;
 }

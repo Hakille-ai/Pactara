@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Layers, RefreshCw, SquarePen } from "lucide-react"
 import { JsonBlock } from "@/components/shared/JsonBlock"
+import { toast } from "sonner"
 
 export function DomainsPanel() {
   const { identity, domains, domainTemplates, setDomainTemplates, domainAction, setDomainAction, setPact } = useAppStore()
@@ -39,24 +40,36 @@ export function DomainsPanel() {
   }
 
   async function createAction() {
-    if (!identity) return
+    if (!identity) {
+      toast.error("Identity Required", { description: "Create an identity first." })
+      return
+    }
     let parsedPayload = {}
     try { parsedPayload = JSON.parse(payloadJson) } catch { /* */ }
     const response = await runAction(
       () => pactaraFetch<DomainActionResponse>(`/v1/domains/${domainId}/actions`, {
         method: "POST",
-        body: JSON.stringify({ actor: identity.id, target, action_type: actionType, template_id: templateId || null, payload: parsedPayload }),
+        body: JSON.stringify({ actor: identity.id, target, action_type: actionType, template_id: (templateId && templateId !== "_custom") ? templateId : null, payload: parsedPayload }),
       }),
-      "Domain action created with backing PACT."
+      "Domain action created."
     )
-    if (response) { setDomainAction(response); setPact(response.pact) }
+    if (response) { 
+      setDomainAction(response)
+      setPact(response.pact) 
+      toast.success("Action Executed", { description: `Domain action ${actionType} is backed by PACT.` })
+    }
   }
 
   return (
     <div className="flex flex-col gap-6 w-full max-w-5xl animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Civilization Domains</h1>
-        <p className="text-muted-foreground mt-2">Execute domain-specific actions backed by sovereign PACTs.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Civilization Domains</h1>
+          <p className="text-muted-foreground mt-2">Execute domain-specific actions backed by sovereign PACTs.</p>
+        </div>
+        <Button variant="secondary" onClick={() => void loadTemplates()} className="bg-white/10 hover:bg-white/20 text-white border-none">
+          <RefreshCw className="mr-2 h-4 w-4" /> Sync Templates
+        </Button>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -81,18 +94,18 @@ export function DomainsPanel() {
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label className="text-white/70">Template</Label>
-              <Select value={templateId} onValueChange={(v) => setTemplateId(v || "")}><SelectTrigger className="glass-input"><SelectValue placeholder="Custom action" /></SelectTrigger>
-                <SelectContent><SelectItem value="">Custom action</SelectItem>{domainTemplates.map(t => <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>)}</SelectContent>
+              <Select value={templateId || "_custom"} onValueChange={(v) => setTemplateId(v === "_custom" || !v ? "" : v)}><SelectTrigger className="glass-input"><SelectValue placeholder="Custom action" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="_custom">Custom action</SelectItem>
+                  {domainTemplates.map(t => <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>)}
+                </SelectContent>
               </Select>
             </div>
             <div className="space-y-2"><Label className="text-white/70">Action Type</Label><Input value={actionType} onChange={(e) => setActionType(e.target.value)} className="glass-input" /></div>
             <div className="space-y-2"><Label className="text-white/70">Target</Label><Input value={target} onChange={(e) => setTarget(e.target.value)} className="glass-input font-mono text-sm" /></div>
           </div>
           <div className="space-y-2"><Label className="text-white/70">Payload JSON</Label><Textarea value={payloadJson} onChange={(e) => setPayloadJson(e.target.value)} className="glass-input font-mono text-xs min-h-[100px] resize-none" /></div>
-          <div className="flex gap-3">
-            <Button variant="secondary" onClick={() => void loadTemplates()} className="bg-white/10 hover:bg-white/20 text-white border-none"><RefreshCw className="mr-2 h-4 w-4" /> Templates</Button>
-            <Button onClick={() => void createAction()} disabled={!identity} className="flex-1 bg-cyan-500 hover:bg-cyan-600 text-white border-none"><SquarePen className="mr-2 h-4 w-4" /> Create Action</Button>
-          </div>
+          <Button onClick={() => void createAction()} disabled={!identity} className="w-full bg-cyan-500 hover:bg-cyan-600 text-white border-none"><SquarePen className="mr-2 h-4 w-4" /> Create Action</Button>
         </CardContent>
       </Card>
 
