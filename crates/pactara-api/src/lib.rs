@@ -258,9 +258,11 @@ async fn get_identity_did(
 }
 
 async fn create_pact(
+    headers: HeaderMap,
     State(state): State<AppState>,
     Json(payload): Json<CreatePactRequest>,
 ) -> Result<Json<Pact>, ApiError> {
+    ensure_auth(&state, &headers).await?;
     validate_pact_request(&payload)?;
     state.db.get_identity(&payload.actor).await?;
 
@@ -324,9 +326,11 @@ async fn get_pact_timeline(
 }
 
 async fn sign_pact(
+    headers: HeaderMap,
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Pact>, ApiError> {
+    ensure_auth(&state, &headers).await?;
     let pact = state.db.get_pact(id).await?;
     if pact.status == PactStatus::Revoked {
         return Err(ApiError::bad_request("revoked PACTs cannot be signed"));
@@ -412,10 +416,12 @@ async fn verify_pact_inner(
 }
 
 async fn revoke_pact(
+    headers: HeaderMap,
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Json(payload): Json<RevokePactRequest>,
 ) -> Result<Json<pactara_core::Revocation>, ApiError> {
+    ensure_auth(&state, &headers).await?;
     if payload.reason.trim().is_empty() {
         return Err(ApiError::bad_request("revocation reason is required"));
     }
@@ -430,9 +436,11 @@ async fn revoke_pact(
 }
 
 async fn create_proof(
+    headers: HeaderMap,
     State(state): State<AppState>,
     Json(payload): Json<CreateProofRequest>,
 ) -> Result<Json<Proof>, ApiError> {
+    ensure_auth(&state, &headers).await?;
     if payload.proof_type.trim().is_empty() {
         return Err(ApiError::bad_request("proof_type is required"));
     }
@@ -462,9 +470,11 @@ async fn list_proofs(
 }
 
 async fn create_mandate(
+    headers: HeaderMap,
     State(state): State<AppState>,
     Json(payload): Json<CreateMandateRequest>,
 ) -> Result<Json<Mandate>, ApiError> {
+    ensure_auth(&state, &headers).await?;
     validate_mandate_request(&payload)?;
     state.db.get_identity(&payload.principal).await?;
     state.db.get_identity(&payload.agent).await?;
@@ -490,9 +500,11 @@ async fn check_mandate(
 }
 
 async fn create_genome(
+    headers: HeaderMap,
     State(state): State<AppState>,
     Json(payload): Json<CreateGenomeRequest>,
 ) -> Result<Json<Genome>, ApiError> {
+    ensure_auth(&state, &headers).await?;
     if payload.subject.trim().is_empty() {
         return Err(ApiError::bad_request("genome subject is required"));
     }
@@ -2947,5 +2959,41 @@ mod tests {
 
         let result = ensure_auth(&state, &headers).await;
         assert!(result.is_err(), "Authentication should NOT be bypassed by spoofed signed-request header");
+    }
+
+    #[tokio::test]
+    async fn sensitive_endpoints_require_auth() {
+        let db = Db::mock();
+        let state = AppState {
+            db,
+            auth_required: true,
+        };
+        let headers = HeaderMap::new();
+
+        // Test create_pact
+        let pact_req = CreatePactRequest {
+            actor: "pactara:person:a".to_string(),
+            intent: "test".to_string(),
+            object: json!({}),
+            target: "pactara:org:b".to_string(),
+            terms: json!({}),
+            consent: json!({}),
+            proof: json!({}),
+            expires_at: None,
+        };
+        let result = create_pact(headers.clone(), State(state.clone()), Json(pact_req)).await;
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err().status, StatusCode::UNAUTHORIZED);
+
+        // Test create_mandate
+        let mandate_req = CreateMandateRequest {
+            principal: "pactara:person:a".to_string(),
+            agent: "pactara:agent:b".to_string(),
+            scope: json!({}),
+            expires_at: Utc::now() + chrono::Duration::hours(1),
+        };
+        let result = create_mandate(headers.clone(), State(state.clone()), Json(mandate_req)).await;
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err().status, StatusCode::UNAUTHORIZED);
     }
 }
