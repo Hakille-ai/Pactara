@@ -7,6 +7,8 @@ import {
   Activity,
   BadgeCheck,
   Bot,
+  Check,
+  Copy,
   Dna,
   FileCheck2,
   Fingerprint,
@@ -4023,18 +4025,59 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 }
 
 function JsonBlock({ value }: { value: unknown }) {
+  const [copied, setCopied] = useState(false);
+  const text = JSON.stringify(value, null, 2);
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
-    <pre className="max-h-96 overflow-auto rounded border border-ink/10 bg-ink p-4 text-xs leading-relaxed text-white">
-      {JSON.stringify(value, null, 2)}
-    </pre>
+    <div className="group relative">
+      <pre className="max-h-96 overflow-auto rounded border border-ink/10 bg-ink p-4 text-xs leading-relaxed text-white">
+        {text}
+      </pre>
+      <button
+        onClick={() => void handleCopy()}
+        className="absolute right-2 top-2 rounded bg-white/10 p-1.5 text-white/50 backdrop-blur transition hover:bg-white/20 hover:text-white focus-visible:bg-white/20 focus-visible:text-white sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
+        aria-label="Copy JSON to clipboard"
+        title="Copy JSON"
+      >
+        {copied ? <Check size={14} /> : <Copy size={14} />}
+      </button>
+    </div>
   );
 }
 
 function StateLine({ label, value }: { label: string; value: string }) {
+  const [copied, setCopied] = useState(false);
+  const isPlaceHolder = value === "not created" || value === "missing" || value === "not signed";
+
+  const handleCopy = async () => {
+    if (isPlaceHolder) return;
+    await navigator.clipboard.writeText(value);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
-    <div className="rounded border border-ink/10 p-4">
+    <div className="group relative rounded border border-ink/10 p-4">
       <p className="text-xs uppercase text-ink/50">{label}</p>
-      <p className="mt-1 break-all font-mono text-sm text-ink/75">{value}</p>
+      <div className="mt-1 flex items-start justify-between gap-2">
+        <p className="break-all font-mono text-sm text-ink/75">{value}</p>
+        {!isPlaceHolder && (
+          <button
+            onClick={() => void handleCopy()}
+            className="flex-shrink-0 rounded p-1 text-ink/30 transition hover:bg-ink hover:text-white focus-visible:bg-ink focus-visible:text-white sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
+            aria-label={`Copy ${label} to clipboard`}
+            title={`Copy ${label}`}
+          >
+            {copied ? <Check size={14} /> : <Copy size={14} />}
+          </button>
+        )}
+      </div>
     </div>
   );
 }
