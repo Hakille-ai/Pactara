@@ -124,44 +124,59 @@ export function AgentsPanel() {
   }
 
   return (
-    <div className="flex flex-col gap-6 w-full max-w-5xl animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex items-center justify-between">
+    <div className="flex flex-col gap-8 w-full max-w-5xl animate-in fade-in slide-in-from-bottom-6 duration-700">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">AI Agents</h1>
-          <p className="text-muted-foreground mt-2">
-            Provision sovereign AI agents and assign them verifiable tasks under your identity mandates.
+          <h1 className="text-3xl font-extrabold tracking-tight text-white">
+            Autonomous <span className="accent-text-cyan-teal">AI Agents</span>
+          </h1>
+          <p className="text-white/40 mt-1 text-sm tracking-wide">
+            Provision secure AI agents and assign them mandate-bound policy evaluation tasks.
           </p>
         </div>
-        <Button onClick={() => void refreshAgents()} variant="secondary" className="bg-white/10 hover:bg-white/20 text-white border-none">
-          <RefreshCw className="mr-2 h-4 w-4" /> Refresh
+        <Button 
+          onClick={() => void refreshAgents()} 
+          variant="secondary" 
+          className="bg-white/[0.04] hover:bg-white/[0.08] text-white border border-white/5 btn-apple-spring h-10 px-5 rounded-lg shrink-0"
+        >
+          <RefreshCw className="mr-2 h-4 w-4 text-cyan-400" /> Sync Agent Profiles
         </Button>
       </div>
 
       {!identity && (
-        <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-4 text-sm text-amber-400 flex items-center gap-2">
-          <Bot className="h-4 w-4 shrink-0" />
-          Create an Identity first to provision agents.
+        <div className="rounded-xl border border-amber-500/10 bg-amber-500/5 p-4.5 text-xs text-amber-400/90 flex items-center gap-3 backdrop-blur-md">
+          <Bot className="h-5 w-5 shrink-0 text-amber-400" />
+          <span>A registered sovereign <strong>Identity Alias</strong> is required before provisioning autonomous agent entities. Please configure an identity first.</span>
         </div>
       )}
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card className="glass-panel">
-          <CardHeader className="bg-white/[0.02] border-b border-white/5 pb-4">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-md bg-purple-500/10 text-purple-400"><Bot className="h-5 w-5" /></div>
-              <CardTitle className="text-lg">Create Agent</CardTitle>
+      <div className="grid gap-8 lg:grid-cols-5 items-start">
+        {/* Provision Form */}
+        <Card className="glass-panel-glow lg:col-span-2 overflow-hidden">
+          <CardHeader className="bg-white/[0.01] border-b border-white/5 pb-4 px-6 pt-6">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                <Bot className="h-5 w-5 stroke-[2]" />
+              </div>
+              <div>
+                <CardTitle className="text-lg font-bold text-white tracking-wide">Provision Profile</CardTitle>
+                <CardDescription className="text-white/40 text-xs">Instantiate a secure mandate delegate.</CardDescription>
+              </div>
             </div>
           </CardHeader>
-          <CardContent className="p-5 space-y-4">
+          <CardContent className="p-6 space-y-5">
             <div className="space-y-2">
-              <Label className="text-white/70">Agent Name</Label>
-              <Input value={agentName} onChange={(e) => setAgentName(e.target.value)} className="glass-input" placeholder="e.g. Negotiator-01" />
+              <Label className="text-xs font-bold uppercase tracking-widest text-white/50">Agent Identifier</Label>
+              <Input value={agentName} onChange={(e) => setAgentName(e.target.value)} className="glass-input h-10 px-3.5 focus:ring-cyan-500/20" placeholder="e.g. Negotiator-01" />
             </div>
+            
             <div className="space-y-2">
-              <Label className="text-white/70">Model</Label>
+              <Label className="text-xs font-bold uppercase tracking-widest text-white/50">Model Profile</Label>
               <Select value={modelName} onValueChange={(v) => setModelName(v ?? "gpt-4o")}>
-                <SelectTrigger className="glass-input"><SelectValue /></SelectTrigger>
-                <SelectContent>
+                <SelectTrigger className="glass-input h-10 focus:ring-cyan-500/20 text-white/80">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-[#0b0b0b] border-white/5 text-white/85">
                   <SelectItem value="gpt-4o">GPT-4o (OpenAI)</SelectItem>
                   <SelectItem value="gpt-4-turbo">GPT-4 Turbo (OpenAI)</SelectItem>
                   <SelectItem value="claude-3-opus">Claude 3 Opus (Anthropic)</SelectItem>
@@ -169,12 +184,15 @@ export function AgentsPanel() {
                 </SelectContent>
               </Select>
             </div>
+
             {mandates.length > 0 && (
               <div className="space-y-2">
-                <Label className="text-white/70">Operating Mandate</Label>
+                <Label className="text-xs font-bold uppercase tracking-widest text-white/50">Delegate Mandate</Label>
                 <Select value={mandateId ?? "_none"} onValueChange={(v) => setMandateId(v === "_none" || !v ? undefined : v)}>
-                  <SelectTrigger className="glass-input"><SelectValue placeholder="Select Mandate" /></SelectTrigger>
-                  <SelectContent>
+                  <SelectTrigger className="glass-input h-10 focus:ring-cyan-500/20 text-white/80">
+                    <SelectValue placeholder="Select Mandate" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#0b0b0b] border-white/5 text-white/85">
                     <SelectItem value="_none">No Mandate (Unbound)</SelectItem>
                     {mandates.map(m => (
                       <SelectItem key={m.id} value={m.id}>{m.id.slice(0, 16)}...</SelectItem>
@@ -183,27 +201,40 @@ export function AgentsPanel() {
                 </Select>
               </div>
             )}
-            <Button onClick={() => void createAgent()} disabled={!identity} className="w-full bg-purple-500 hover:bg-purple-600 text-white border-none mt-2">
-              <PlusCircle className="mr-2 h-4 w-4" /> Provision Agent
+
+            <Button 
+              onClick={() => void createAgent()} 
+              disabled={!identity} 
+              className="w-full h-10 bg-cyan-500 hover:bg-cyan-600 text-black font-semibold tracking-wide border-none shadow-[0_4px_24px_rgba(6,182,212,0.25)] transition-all duration-300 btn-apple-spring mt-2 rounded-lg"
+            >
+              <PlusCircle className="mr-2 h-4 w-4 stroke-[2.5]" /> Provision Agent
             </Button>
           </CardContent>
         </Card>
 
-        <Card className="glass-panel">
-          <CardHeader className="bg-white/[0.02] border-b border-white/5 pb-4">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-md bg-blue-500/10 text-blue-400"><CheckCircle2 className="h-5 w-5" /></div>
-              <CardTitle className="text-lg">Task & Run</CardTitle>
+        {/* Task & Run Form */}
+        <Card className="glass-panel-glow lg:col-span-3 overflow-hidden">
+          <CardHeader className="bg-white/[0.01] border-b border-white/5 pb-4 px-6 pt-6">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-500/10 text-violet-400 border border-violet-500/20">
+                <Play className="h-5 w-5 stroke-[2]" />
+              </div>
+              <div>
+                <CardTitle className="text-lg font-bold text-white tracking-wide">Evaluate Policy Action</CardTitle>
+                <CardDescription className="text-white/40 text-xs">Run policy simulations bound by active delegates.</CardDescription>
+              </div>
             </div>
           </CardHeader>
-          <CardContent className="p-5 space-y-4">
+          <CardContent className="p-6 space-y-5">
             {agents.length > 0 ? (
               <>
                 <div className="space-y-2">
-                  <Label className="text-white/70">Target Agent</Label>
+                  <Label className="text-xs font-bold uppercase tracking-widest text-white/50">Active Agent Delegate</Label>
                   <Select value={selectedAgent ?? "_none"} onValueChange={(v) => setSelectedAgent(v === "_none" || !v ? undefined : v)}>
-                    <SelectTrigger className="glass-input"><SelectValue placeholder="Select Agent" /></SelectTrigger>
-                    <SelectContent>
+                    <SelectTrigger className="glass-input h-10 focus:ring-cyan-500/20 text-white/80">
+                      <SelectValue placeholder="Select Agent" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#0b0b0b] border-white/5 text-white/85">
                       {agents.map(a => (
                         <SelectItem key={a.id} value={a.id}>{a.label}</SelectItem>
                       ))}
@@ -211,98 +242,123 @@ export function AgentsPanel() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-white/70">Task Name</Label>
-                  <Input value={taskName} onChange={(e) => setTaskName(e.target.value)} className="glass-input" />
+                  <Label className="text-xs font-bold uppercase tracking-widest text-white/50">Simulated Action Name</Label>
+                  <Input value={taskName} onChange={(e) => setTaskName(e.target.value)} className="glass-input h-10 px-3.5 focus:ring-cyan-500/20" />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-white/70">Instruction</Label>
-                  <Input value={taskInstruction} onChange={(e) => setTaskInstruction(e.target.value)} className="glass-input" />
+                  <Label className="text-xs font-bold uppercase tracking-widest text-white/50">Policy Scenarios Instruction</Label>
+                  <Input value={taskInstruction} onChange={(e) => setTaskInstruction(e.target.value)} className="glass-input h-10 px-3.5 focus:ring-cyan-500/20" />
                 </div>
-                <div className="flex gap-3 mt-2">
-                  <Button variant="secondary" onClick={() => void createTask()} disabled={!identity || !selectedAgent} className="flex-1 bg-white/10 hover:bg-white/20 text-white border-none">
-                    <PlusCircle className="mr-2 h-4 w-4" /> Draft Task
+                <div className="flex gap-4 pt-2">
+                  <Button variant="secondary" onClick={() => void createTask()} disabled={!identity || !selectedAgent} className="flex-1 h-10 bg-white/[0.04] hover:bg-white/[0.08] text-white border border-white/5 rounded-lg btn-apple-spring">
+                    <PlusCircle className="mr-2 h-4 w-4 text-violet-400 stroke-[2]" /> Draft Task
                   </Button>
-                  <Button onClick={() => void startRun()} disabled={!identity || !selectedAgent} className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white border-none">
-                    <Play className="mr-2 h-4 w-4" /> Start Run
+                  <Button onClick={() => void startRun()} disabled={!identity || !selectedAgent} className="flex-1 h-10 bg-violet-500 hover:bg-violet-600 text-black font-semibold tracking-wide border-none shadow-[0_4px_24px_rgba(167,139,250,0.25)] rounded-lg btn-apple-spring">
+                    <Play className="mr-2 h-4 w-4 stroke-[2.5]" /> Start Evaluation
                   </Button>
                 </div>
               </>
             ) : (
-              <div className="p-8 text-center text-white/40 text-sm">
-                <Bot className="h-8 w-8 mx-auto mb-3 text-white/20" />
-                <p>No agents provisioned yet.</p>
-                <p className="text-xs mt-1">Create an agent first, or click Refresh.</p>
+              <div className="p-12 text-center text-white/30 text-xs flex flex-col items-center gap-3">
+                <Bot className="h-6 w-6 stroke-[1.5] text-white/20 animate-pulse" />
+                <p>No active agent delegates configured on this node.</p>
+                <p className="text-[10px] text-white/25 mt-0.5">Please provision an agent profile using the setup form.</p>
               </div>
             )}
           </CardContent>
         </Card>
       </div>
 
-      {/* Agent Registry */}
-      {agents.length > 0 && (
-        <Card className="glass-panel overflow-hidden">
-          <CardHeader className="bg-white/[0.02] border-b border-white/5 pb-4">
-            <CardTitle className="text-lg">Agent Registry</CardTitle>
-            <CardDescription>{agents.length} agent(s) provisioned</CardDescription>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="divide-y divide-white/5 max-h-[300px] overflow-auto">
-              {agents.map((agent) => (
-                <div key={agent.id} className={`p-4 hover:bg-white/[0.02] transition-colors cursor-pointer ${selectedAgent === agent.id ? 'bg-purple-500/5 border-l-2 border-l-purple-500' : ''}`}
-                  onClick={() => setSelectedAgent(agent.id)}>
-                  <div className="flex justify-between items-start">
-                    <span className="font-semibold text-sm text-purple-400">{agent.label}</span>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-white/10 text-white/60">{agent.model}</span>
-                  </div>
-                  <p className="text-xs text-white/40 font-mono mt-1">{agent.id}</p>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Agent Run Result */}
-      {agentRun && (
-        <Card className="glass-panel overflow-hidden animate-in fade-in slide-in-from-bottom-2">
-          <CardHeader className="bg-white/[0.02] border-b border-white/5 pb-4">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-md bg-emerald-500/10 text-emerald-500"><Play className="h-5 w-5" /></div>
+      {/* Registry & Execution Result Details */}
+      <div className="grid gap-8 lg:grid-cols-5 items-start">
+        {/* Agent Profiles Registry List */}
+        {agents.length > 0 && (
+          <Card className="glass-panel lg:col-span-2 overflow-hidden">
+            <CardHeader className="bg-white/[0.01] border-b border-white/5 pb-4 px-6 pt-6 flex flex-row items-center justify-between">
               <div>
-                <CardTitle className="text-lg">Agent Execution Result</CardTitle>
-                <CardDescription>Status: {agentRun.run.status}</CardDescription>
+                <CardTitle className="text-base font-bold text-white">Active Delegates</CardTitle>
+                <CardDescription className="text-white/40 text-xs">{agents.length} profile(s) provisioned</CardDescription>
               </div>
-            </div>
-          </CardHeader>
-          <CardContent className="p-6">
-            <div className="grid gap-3 sm:grid-cols-3 mb-6">
-              <div className="rounded border border-white/5 bg-white/[0.02] p-4 text-center">
-                <p className="text-xs uppercase text-white/50 mb-1">Action</p>
-                <p className="font-mono text-sm break-all">{agentRun.run.action}</p>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="divide-y divide-white/5 max-h-[360px] overflow-y-auto scrollbar-thin scrollbar-thumb-white/5">
+                {agents.map((agent) => {
+                  const isSelected = selectedAgent === agent.id;
+                  return (
+                    <div 
+                      key={agent.id} 
+                      className={`p-4.5 hover:bg-white/[0.02] transition-all duration-300 cursor-pointer flex items-center justify-between gap-4 select-none ${
+                        isSelected ? 'bg-cyan-500/[0.04] border-l-2 border-cyan-500' : ''
+                      }`}
+                      onClick={() => setSelectedAgent(agent.id)}
+                    >
+                      <div className="space-y-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-sm text-white/90 truncate">{agent.label}</span>
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                        </div>
+                        <p className="text-[10px] text-white/30 font-mono truncate">{agent.id}</p>
+                      </div>
+                      <span className="shrink-0 px-2 py-0.5 rounded text-[9px] font-mono tracking-wider font-bold uppercase bg-white/[0.04] border border-white/5 text-white/50">{agent.model}</span>
+                    </div>
+                  );
+                })}
               </div>
-              <div className="rounded border border-white/5 bg-white/[0.02] p-4 text-center">
-                <p className="text-xs uppercase text-white/50 mb-1">Policy</p>
-                <p className={`font-mono font-medium ${agentRun.run.policy_decision === 'allow' ? 'text-emerald-400' : 'text-amber-400'}`}>
-                  {agentRun.run.policy_decision}
-                </p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Execution Log Result Display */}
+        {agentRun && (
+          <Card className="glass-panel lg:col-span-3 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <CardHeader className="bg-white/[0.01] border-b border-white/5 pb-4 px-6 pt-6">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  <Play className="h-5 w-5 stroke-[2]" />
+                </div>
+                <div>
+                  <CardTitle className="text-base font-bold text-white">Execution Telemetry Log</CardTitle>
+                  <CardDescription className="text-white/40 text-xs">Run manifest identifier: {agentRun.run.id.slice(0, 16)}...</CardDescription>
+                </div>
               </div>
-              <div className="rounded border border-white/5 bg-white/[0.02] p-4 text-center">
-                <p className="text-xs uppercase text-white/50 mb-1">Status</p>
-                <p className="font-mono font-medium text-white/80 uppercase">{agentRun.run.status}</p>
+            </CardHeader>
+            <CardContent className="p-6 space-y-6">
+              <div className="grid gap-4 grid-cols-3">
+                <div className="rounded-xl border border-white/5 bg-white/[0.01] p-3 text-center">
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-white/30 mb-1">Scope Action</p>
+                  <p className="font-mono text-xs font-semibold text-white/80 truncate capitalize">{agentRun.run.action}</p>
+                </div>
+                <div className="rounded-xl border border-white/5 bg-white/[0.01] p-3 text-center">
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-white/30 mb-1">Policy Safeguard</p>
+                  <p className={`font-mono text-xs font-bold truncate capitalize ${
+                    agentRun.run.policy_decision === 'allow' ? 'text-emerald-400' : 'text-amber-400 animate-pulse'
+                  }`}>
+                    {agentRun.run.policy_decision}
+                  </p>
+                </div>
+                <div className="rounded-xl border border-white/5 bg-white/[0.01] p-3 text-center">
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-white/30 mb-1">State</p>
+                  <p className="font-mono text-xs font-semibold text-white/80 uppercase truncate">{agentRun.run.status}</p>
+                </div>
               </div>
-            </div>
-            {!!agentRun.run.output && (
-              <div className="rounded-lg border border-white/5 bg-black/40 p-4 mb-4">
-                <p className="text-sm font-medium text-white/70 mb-2">Agent Output</p>
-                <pre className="text-sm font-mono whitespace-pre-wrap text-emerald-300">
-                  {typeof agentRun.run.output === 'string' ? agentRun.run.output : JSON.stringify(agentRun.run.output, null, 2)}
-                </pre>
+
+              {!!agentRun.run.output && (
+                <div className="rounded-xl border border-white/5 bg-black/45 p-4 shadow-inner">
+                  <p className="text-xs font-bold uppercase tracking-widest text-white/40 mb-2.5">Agent Raw Output</p>
+                  <pre className="text-xs font-mono whitespace-pre-wrap text-emerald-300/90 leading-relaxed max-h-48 overflow-y-auto scrollbar-thin">
+                    {typeof agentRun.run.output === 'string' ? agentRun.run.output : JSON.stringify(agentRun.run.output, null, 2)}
+                  </pre>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-white/30 px-1">Evaluation Response Schema</span>
+                <JsonBlock value={agentRun} />
               </div>
-            )}
-            <JsonBlock value={agentRun} />
-          </CardContent>
-        </Card>
-      )}
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   )
 }

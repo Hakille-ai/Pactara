@@ -61,55 +61,118 @@ export function DomainsPanel() {
   }
 
   return (
-    <div className="flex flex-col gap-6 w-full max-w-5xl animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex items-center justify-between">
+    <div className="flex flex-col gap-8 w-full max-w-5xl animate-in fade-in slide-in-from-bottom-6 duration-700">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Civilization Domains</h1>
-          <p className="text-muted-foreground mt-2">Execute domain-specific actions backed by sovereign PACTs.</p>
+          <h1 className="text-3xl font-extrabold tracking-tight text-white">
+            Civilization <span className="accent-text-cyan-teal">Domains</span>
+          </h1>
+          <p className="text-white/40 mt-1 text-sm tracking-wide">
+            Execute domain-specific actions cryptographically backed by sovereign PACTs.
+          </p>
         </div>
-        <Button variant="secondary" onClick={() => void loadTemplates()} className="bg-white/10 hover:bg-white/20 text-white border-none">
-          <RefreshCw className="mr-2 h-4 w-4" /> Sync Templates
+        <Button 
+          variant="secondary" 
+          onClick={() => void loadTemplates()} 
+          className="bg-white/[0.04] hover:bg-white/[0.08] text-white border border-white/5 btn-apple-spring h-10 px-5 rounded-lg shrink-0"
+        >
+          <RefreshCw className="mr-2 h-4 w-4 text-cyan-400" /> Sync Templates
         </Button>
       </div>
 
+      {/* Domain Grid Selection */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {domains.map((domain) => (
-          <button key={domain.id}
-            className={`rounded-xl border p-4 text-left transition-all duration-300 ${domain.id === domainId ? "border-primary/50 bg-primary/10 shadow-[0_0_15px_rgba(255,255,255,0.1)]" : "border-white/5 bg-white/[0.02] hover:bg-white/[0.05] hover:border-white/10"}`}
-            onClick={() => { setDomainId(domain.id); void loadTemplates(domain.id) }}>
-            <p className={`font-semibold ${domain.id === domainId ? 'text-primary' : 'text-foreground'}`}>{domain.label}</p>
-            <p className="mt-2 text-xs text-muted-foreground line-clamp-2">{domain.description}</p>
-          </button>
-        ))}
+        {domains.map((domain) => {
+          const isSelected = domain.id === domainId;
+          return (
+            <button 
+              key={domain.id}
+              className={`rounded-xl border p-4.5 text-left transition-all duration-300 relative overflow-hidden select-none btn-apple-spring ${
+                isSelected 
+                  ? "border-cyan-500/30 bg-cyan-950/15 shadow-[0_8px_32px_rgba(6,182,212,0.12),inset_0_1px_0_rgba(255,255,255,0.05)]" 
+                  : "border-white/5 bg-white/[0.01] hover:bg-white/[0.03] hover:border-white/10"
+              }`}
+              onClick={() => { setDomainId(domain.id); void loadTemplates(domain.id) }}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <p className={`font-bold text-sm tracking-wide ${isSelected ? 'text-cyan-400 font-extrabold' : 'text-white/80'}`}>{domain.label}</p>
+                {isSelected && <span className="status-led status-led-blue scale-75" />}
+              </div>
+              <p className="mt-2 text-xs text-white/40 leading-relaxed line-clamp-2">{domain.description}</p>
+              {isSelected && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-teal-500 to-cyan-500" />}
+            </button>
+          );
+        })}
       </div>
 
-      <Card className="glass-panel">
-        <CardHeader className="bg-white/[0.02] border-b border-white/5 pb-4">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-cyan-500/10 text-cyan-400"><Layers className="h-5 w-5" /></div>
-            <CardTitle className="text-lg">Domain Action</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent className="p-5 space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label className="text-white/70">Template</Label>
-              <Select value={templateId || "_custom"} onValueChange={(v) => setTemplateId(v === "_custom" || !v ? "" : v)}><SelectTrigger className="glass-input"><SelectValue placeholder="Custom action" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="_custom">Custom action</SelectItem>
-                  {domainTemplates.map(t => <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
+      <div className="grid gap-8 lg:grid-cols-5 items-start">
+        {/* Domain Action Configuration */}
+        <Card className="glass-panel-glow lg:col-span-3 overflow-hidden">
+          <CardHeader className="bg-white/[0.01] border-b border-white/5 pb-4 px-6 pt-6">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                <Layers className="h-5 w-5 stroke-[2]" />
+              </div>
+              <div>
+                <CardTitle className="text-base font-bold text-white tracking-wide">Compose Action</CardTitle>
+              </div>
             </div>
-            <div className="space-y-2"><Label className="text-white/70">Action Type</Label><Input value={actionType} onChange={(e) => setActionType(e.target.value)} className="glass-input" /></div>
-            <div className="space-y-2"><Label className="text-white/70">Target</Label><Input value={target} onChange={(e) => setTarget(e.target.value)} className="glass-input font-mono text-sm" /></div>
-          </div>
-          <div className="space-y-2"><Label className="text-white/70">Payload JSON</Label><Textarea value={payloadJson} onChange={(e) => setPayloadJson(e.target.value)} className="glass-input font-mono text-xs min-h-[100px] resize-none" /></div>
-          <Button onClick={() => void createAction()} disabled={!identity} className="w-full bg-cyan-500 hover:bg-cyan-600 text-white border-none"><SquarePen className="mr-2 h-4 w-4" /> Create Action</Button>
-        </CardContent>
-      </Card>
+          </CardHeader>
+          <CardContent className="p-6 space-y-5">
+            <div className="grid gap-6 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label className="text-xs font-bold uppercase tracking-widest text-white/50">Action Template</Label>
+                <Select value={templateId || "_custom"} onValueChange={(v) => setTemplateId(v === "_custom" || !v ? "" : v)}>
+                  <SelectTrigger className="glass-input h-10 focus:ring-cyan-500/20 text-white/80">
+                    <SelectValue placeholder="Custom action template" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#0b0b0b] border-white/5 text-white/85">
+                    <SelectItem value="_custom">Custom Action</SelectItem>
+                    {domainTemplates.map(t => <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-bold uppercase tracking-widest text-white/50">Action Name Type</Label>
+                <Input value={actionType} onChange={(e) => setActionType(e.target.value)} className="glass-input h-10 px-3.5 focus:ring-cyan-500/20" />
+              </div>
+            </div>
 
-      {domainAction && <Card className="glass-panel overflow-hidden animate-in fade-in slide-in-from-bottom-2"><CardContent className="p-0"><div className="p-4 bg-black/40"><JsonBlock value={domainAction} /></div></CardContent></Card>}
+            <div className="space-y-2">
+              <Label className="text-xs font-bold uppercase tracking-widest text-white/50">Target Resource URI</Label>
+              <Input value={target} onChange={(e) => setTarget(e.target.value)} className="glass-input h-10 px-3.5 focus:ring-cyan-500/20 font-mono text-xs" />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs font-bold uppercase tracking-widest text-white/50">Action Payload (JSON)</Label>
+              <Textarea value={payloadJson} onChange={(e) => setPayloadJson(e.target.value)} className="glass-input min-h-[110px] p-3 resize-none focus:ring-cyan-500/20 font-mono text-xs bg-black/40" />
+            </div>
+
+            <Button 
+              onClick={() => void createAction()} 
+              disabled={!identity} 
+              className="w-full h-10 bg-cyan-500 hover:bg-cyan-600 text-black font-semibold tracking-wide border-none shadow-[0_4px_24px_rgba(6,182,212,0.25)] rounded-lg btn-apple-spring transition-all duration-300 pt-0.5"
+            >
+              <SquarePen className="mr-2 h-4 w-4 stroke-[2.5]" /> Instantiate Domain Action
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Action Result / Ledger Monitor */}
+        <div className="lg:col-span-2 space-y-6">
+          {domainAction ? (
+            <div className="space-y-2 animate-in fade-in zoom-in-95 duration-500">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-white/30 px-1">Verifiable Domain PACT</span>
+              <JsonBlock value={domainAction} />
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-white/5 bg-[#080808]/60 p-8 text-center flex flex-col items-center justify-center min-h-[220px] text-white/30 gap-3 border-dashed">
+              <Layers className="h-8 w-8 stroke-[1.5] text-white/20 animate-pulse" />
+              <p className="text-xs max-w-[200px] leading-relaxed">No action triggered for this civilization domain zone.</p>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

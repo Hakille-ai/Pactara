@@ -33,91 +33,101 @@ export function BundlePanel() {
   }
 
   return (
-    <div className="flex flex-col gap-6 w-full max-w-5xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="flex flex-col gap-8 w-full max-w-5xl animate-in fade-in slide-in-from-bottom-6 duration-700">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Portable Bundle</h1>
-        <p className="text-muted-foreground mt-2">
-          Export full cryptographic evidence and history for offline verification.
+        <h1 className="text-3xl font-extrabold tracking-tight text-white">
+          Portable <span className="accent-text-cyan-teal">Bundle</span>
+        </h1>
+        <p className="text-white/40 mt-1 text-sm tracking-wide">
+          Export full cryptographically seal-signed historical records for offline zero-trust audit compliance.
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
-        <Card className="glass-panel md:col-span-1 h-fit">
-          <CardHeader className="bg-white/[0.02] border-b border-white/5 pb-4">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-md bg-blue-500/10 text-blue-400">
-                <QrCode className="h-5 w-5" />
+      <div className="grid gap-8 lg:grid-cols-5 items-start">
+        {/* Left: Search / Retrieve Form */}
+        <Card className="glass-panel-glow lg:col-span-2 overflow-hidden h-fit">
+          <CardHeader className="bg-white/[0.01] border-b border-white/5 pb-4 px-6 pt-6">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                <QrCode className="h-5 w-5 stroke-[2]" />
               </div>
               <div>
-                <CardTitle className="text-lg">Retrieve Bundle</CardTitle>
+                <CardTitle className="text-base font-bold text-white tracking-wide">Export Evidence</CardTitle>
+                <CardDescription className="text-white/40 text-xs">Bundle historical state proofs.</CardDescription>
               </div>
             </div>
           </CardHeader>
-          <CardContent className="p-5 space-y-4">
+          <CardContent className="p-6 space-y-5">
             <div className="space-y-2">
-              <Label className="text-white/70">PACT ID</Label>
+              <Label className="text-xs font-bold uppercase tracking-widest text-white/50">PACT ID Reference</Label>
               <Input 
                 value={pactId} 
                 onChange={(e) => setPactId(e.target.value)} 
-                className="glass-input font-mono text-sm" 
+                className="glass-input h-10 px-3.5 focus:ring-cyan-500/20 font-mono text-xs text-white/90" 
                 placeholder="pact:..."
               />
             </div>
-            <Button onClick={() => void loadBundle()} disabled={!pactId} className="w-full bg-blue-500 hover:bg-blue-600 text-white border-none mt-2">
-              <QrCode className="mr-2 h-4 w-4" /> Load Bundle
+            <Button 
+              onClick={() => void loadBundle()} 
+              disabled={!pactId} 
+              className="w-full h-10 bg-cyan-500 hover:bg-cyan-600 text-black font-semibold tracking-wide border-none shadow-[0_4px_24px_rgba(6,182,212,0.25)] rounded-lg btn-apple-spring transition-all duration-300 pt-0.5"
+            >
+              <QrCode className="mr-2 h-4 w-4 stroke-[2.5]" /> Compile Bundle
             </Button>
           </CardContent>
         </Card>
 
-        {bundle ? (
-          <div className="md:col-span-2 space-y-6">
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 animate-in fade-in slide-in-from-bottom-2">
-              <Card className="glass-panel p-4 flex flex-col justify-center">
-                <p className="text-sm text-white/50 mb-1">Attached Proofs</p>
-                <p className="text-3xl font-bold font-mono">{bundle.proofs.length}</p>
-              </Card>
-              <Card className="glass-panel p-4 flex flex-col justify-center">
-                <p className="text-sm text-white/50 mb-1">Timeline Events</p>
-                <p className="text-3xl font-bold font-mono">{bundle.timeline.length}</p>
-              </Card>
-              <Card className={`glass-panel p-4 flex flex-col justify-center border-l-4 ${bundle.verification.valid ? 'border-l-emerald-500' : 'border-l-red-500'}`}>
-                <p className="text-sm text-white/50 mb-1">Integrity</p>
-                <div className="flex items-center gap-2">
-                  {bundle.verification.valid ? (
-                    <ShieldCheck className="h-6 w-6 text-emerald-500" />
-                  ) : (
-                    <AlertTriangle className="h-6 w-6 text-red-500" />
-                  )}
-                  <p className="text-xl font-bold uppercase">{bundle.verification.valid ? 'Valid' : 'Invalid'}</p>
+        {/* Right: Compiled telemetry display */}
+        <div className="lg:col-span-3 space-y-6">
+          {bundle ? (
+            <div className="space-y-6 animate-in fade-in zoom-in-95 duration-500">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="glass-panel p-4.5 rounded-xl border border-white/5 bg-black/20">
+                  <p className="text-[9px] uppercase tracking-wider font-bold text-white/30 mb-1">Attached Proofs</p>
+                  <p className="text-xl font-extrabold font-mono text-cyan-300 mt-2">{bundle.proofs.length}</p>
                 </div>
-              </Card>
-              <Card className={`glass-panel p-4 flex flex-col justify-center border-l-4 ${bundle.revocation ? 'border-l-red-500' : 'border-l-emerald-500'}`}>
-                <p className="text-sm text-white/50 mb-1">Revocation Status</p>
-                <p className={`text-xl font-bold uppercase ${bundle.revocation ? 'text-red-400' : 'text-emerald-400'}`}>
-                  {bundle.revocation ? 'Revoked' : 'Active'}
-                </p>
-              </Card>
-            </div>
+                <div className="glass-panel p-4.5 rounded-xl border border-white/5 bg-black/20">
+                  <p className="text-[9px] uppercase tracking-wider font-bold text-white/30 mb-1">Timeline Events</p>
+                  <p className="text-xl font-extrabold font-mono text-cyan-300 mt-2">{bundle.timeline.length}</p>
+                </div>
+                <div className={`glass-panel p-4.5 rounded-xl border relative overflow-hidden bg-black/20 ${
+                  bundle.verification.valid 
+                    ? 'border-emerald-500/20 shadow-[0_4px_20px_rgba(16,185,129,0.06)]' 
+                    : 'border-rose-500/20 shadow-[0_4px_20px_rgba(244,63,94,0.06)]'
+                }`}>
+                  <p className="text-[9px] uppercase tracking-wider font-bold text-white/30 mb-1">Seal Integrity</p>
+                  <div className="flex items-center gap-1.5 mt-2">
+                    <span className={`status-led ${bundle.verification.valid ? 'status-led-green' : 'status-led-rose'} scale-75`} />
+                    <p className={`text-sm font-bold uppercase tracking-wider ${bundle.verification.valid ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      {bundle.verification.valid ? 'VALID SEAL' : 'CORRUPT'}
+                    </p>
+                  </div>
+                </div>
+                <div className={`glass-panel p-4.5 rounded-xl border relative overflow-hidden bg-black/20 ${
+                  bundle.revocation 
+                    ? 'border-rose-500/20 shadow-[0_4px_20px_rgba(244,63,94,0.06)]' 
+                    : 'border-emerald-500/20 shadow-[0_4px_20px_rgba(16,185,129,0.06)]'
+                }`}>
+                  <p className="text-[9px] uppercase tracking-wider font-bold text-white/30 mb-1">Revocation Log</p>
+                  <p className={`text-sm font-bold uppercase tracking-wider mt-2 ${bundle.revocation ? 'text-rose-400' : 'text-emerald-400'}`}>
+                    {bundle.revocation ? 'REVOKED' : 'ACTIVE'}
+                  </p>
+                </div>
+              </div>
 
-            <Card className="glass-panel overflow-hidden animate-in fade-in slide-in-from-bottom-3">
-              <CardHeader className="bg-white/[0.02] border-b border-white/5 pb-4">
-                <CardTitle className="text-lg">Raw Bundle Data</CardTitle>
-                <CardDescription>Full cryptographic export of the agreement.</CardDescription>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="p-4 bg-black/40 h-[400px] overflow-auto">
-                  <JsonBlock value={bundle} />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        ) : (
-          <div className="md:col-span-2 flex items-center justify-center p-12 border border-dashed border-white/10 rounded-xl bg-white/[0.01]">
-            <p className="text-white/40 text-center">
-              Load a bundle to view its cryptographic proofs and timeline.
-            </p>
-          </div>
-        )}
+              {/* Raw Details JsonBlock */}
+              <div className="space-y-2">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-white/30 px-1">Raw telemetry data bundle</span>
+                <JsonBlock value={bundle} />
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-white/5 bg-[#080808]/60 p-8 text-center flex flex-col items-center justify-center min-h-[220px] text-white/30 gap-3 border-dashed">
+              <QrCode className="h-8 w-8 stroke-[1.5] text-white/20 animate-pulse" />
+              <p className="text-xs max-w-[200px] leading-relaxed">No compiled bundle loaded in local panel state. Query a PACT ID on the left to export cryptographic evidence.</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

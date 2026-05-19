@@ -89,15 +89,137 @@
   @apply bg-white/20;
 }
 
-/* Glassmorphism utilities */
+/* Glassmorphism utilities with Google/Apple visual style */
 .glass-panel {
-  @apply bg-white/[0.025] backdrop-blur-2xl border border-white/[0.07] shadow-[0_16px_48px_rgba(0,0,0,0.34)] transition-all duration-300 hover:bg-white/[0.04] hover:border-white/[0.1];
+  @apply bg-white/[0.02] backdrop-blur-2xl border border-white/[0.06] shadow-[0_12px_40px_rgba(0,0,0,0.4)] transition-all duration-300 hover:bg-white/[0.03] hover:border-white/[0.09];
+}
+
+.glass-panel-glow {
+  @apply bg-gradient-to-b from-white/[0.03] to-white/[0.01] backdrop-blur-2xl border border-white/[0.06] shadow-[0_24px_64px_-16px_rgba(0,0,0,0.6)] transition-all duration-500 hover:border-white/[0.12] hover:shadow-[0_24px_64px_-8px_rgba(255,255,255,0.02)];
+  position: relative;
+}
+
+.glass-panel-glow::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius);
+  padding: 1px;
+  background: linear-gradient(to bottom, rgba(255,255,255,0.1), rgba(255,255,255,0.02));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
 }
 
 .glass-input {
-  @apply bg-black/20 border-white/10 focus-visible:ring-1 focus-visible:ring-white/30 focus-visible:border-white/20 transition-all text-white placeholder:text-white/30;
+  @apply bg-black/30 border-white/[0.08] focus-visible:ring-1 focus-visible:ring-white/20 focus-visible:border-white/15 transition-all text-white placeholder:text-white/20 rounded-lg duration-300;
+}
+
+.glass-input:focus {
+  box-shadow: 0 0 16px rgba(255,255,255,0.02);
 }
 
 .protocol-band {
-  @apply rounded-lg border border-white/[0.07] bg-black/25;
+  @apply rounded-lg border border-white/[0.05] bg-black/30 backdrop-blur-lg;
 }
+
+/* Accent text gradients */
+.accent-text-cyan-teal {
+  background: linear-gradient(135deg, #2dd4bf 0%, #06b6d4 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.accent-text-violet-pink {
+  background: linear-gradient(135deg, #a78bfa 0%, #f472b6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.accent-text-gold-orange {
+  background: linear-gradient(135deg, #fbbf24 0%, #f97316 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Micro-animations */
+.btn-apple-spring {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s;
+}
+
+.btn-apple-spring:active {
+  transform: scale(0.96);
+}
+
+/* Breathing LED Indicators */
+.status-led {
+  position: relative;
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.status-led::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  opacity: 0.4;
+  animation: ledPulse 2s infinite ease-in-out;
+}
+
+.status-led-green {
+  @apply bg-emerald-400;
+}
+.status-led-green::after {
+  @apply bg-emerald-400;
+}
+
+.status-led-amber {
+  @apply bg-amber-400;
+}
+.status-led-amber::after {
+  @apply bg-amber-400;
+}
+
+.status-led-blue {
+  @apply bg-cyan-400;
+}
+.status-led-blue::after {
+  @apply bg-cyan-400;
+}
+
+@keyframes ledPulse {
+  0% {
+    transform: scale(0.7);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(0.7);
+    opacity: 0;
+  }
+}
+
+/* Dynamic floating Aurora backdrop */
+.aurora-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(120px);
+  opacity: 0.15;
+  pointer-events: none;
+  z-index: -2;
+  mix-blend-mode: screen;
+}
+
+.glow-card-chip {
+  background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.02) 100%);
+  border: 1px solid rgba(255,255,255,0.15);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);
+}
+

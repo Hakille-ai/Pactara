@@ -43,72 +43,98 @@ export function RuntimePanel() {
   ] : []
 
   return (
-    <div className="flex flex-col gap-6 w-full max-w-5xl animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex items-center justify-between">
+    <div className="flex flex-col gap-8 w-full max-w-5xl animate-in fade-in slide-in-from-bottom-6 duration-700">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Sovereign Runtime</h1>
-          <p className="text-muted-foreground mt-2">System health, runtime metrics, and live stream snapshot.</p>
+          <h1 className="text-3xl font-extrabold tracking-tight text-white">
+            Sovereign <span className="accent-text-cyan-teal">Runtime</span>
+          </h1>
+          <p className="text-white/40 mt-1 text-sm tracking-wide">
+            Observe runtime nodes, live SSE data streams, and database operational parameters.
+          </p>
         </div>
-        <div className="flex gap-3">
-          <Button onClick={() => void refreshHealth()} variant="secondary" className="bg-white/10 hover:bg-white/20 text-white border-none">
-            <RefreshCw className="mr-2 h-4 w-4" /> Health
+        <div className="flex gap-3.5">
+          <Button 
+            onClick={() => void refreshHealth()} 
+            variant="secondary" 
+            className="bg-white/[0.04] hover:bg-white/[0.08] text-white border border-white/5 btn-apple-spring h-10 px-5 rounded-lg shrink-0"
+          >
+            <RefreshCw className="mr-2 h-4 w-4 text-cyan-400" /> Run Diagnostics
           </Button>
-          <Button onClick={() => void refreshOps()} variant="secondary" className="bg-white/10 hover:bg-white/20 text-white border-none">
-            <Activity className="mr-2 h-4 w-4" /> Overview
+          <Button 
+            onClick={() => void refreshOps()} 
+            variant="secondary" 
+            className="bg-white/[0.04] hover:bg-white/[0.08] text-white border border-white/5 btn-apple-spring h-10 px-5 rounded-lg shrink-0"
+          >
+            <Activity className="mr-2 h-4 w-4 text-cyan-400" /> Fetch Telemetry
           </Button>
         </div>
       </div>
 
-      <div className="flex items-center gap-4 p-4 rounded-xl border border-white/5 bg-white/[0.02]">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/10">
-          {health?.database ? <CheckCircle2 className="h-6 w-6 text-emerald-500" /> : <XCircle className="h-6 w-6 text-red-500" />}
+      <div className="flex items-center gap-4 p-5 rounded-xl border border-white/5 bg-black/20 shadow-[0_4px_24px_rgba(0,0,0,0.35)] relative overflow-hidden group">
+        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/10 border border-emerald-500/20 shadow-[0_0_18px_rgba(16,185,129,0.1)]">
+          {health?.database ? <CheckCircle2 className="h-6 w-6 text-emerald-400 stroke-[2]" /> : <XCircle className="h-6 w-6 text-red-500 stroke-[2]" />}
         </div>
         <div>
-          <p className="font-semibold">Database Connection</p>
-          <p className="text-sm text-white/60">{health?.database ? "Connected and operational" : "Not checked yet — click Health"}</p>
+          <p className="font-bold text-xs text-white/90 uppercase tracking-widest">Database Node Link</p>
+          <p className="text-[11px] text-white/50 mt-1 font-mono tracking-wide">
+            {health?.database ? "consensus-db-online (READ/WRITE)" : "No live diagnostic data yet. Click Run Diagnostics above."}
+          </p>
         </div>
       </div>
 
       {runtimeMetrics.length > 0 && (
-        <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 animate-in fade-in slide-in-from-bottom-2">
+        <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
           {runtimeMetrics.map((m) => (
-            <Card key={m.label} className="glass-panel p-4">
-              <p className="text-[11px] uppercase tracking-wider text-white/40 mb-1">{m.label}</p>
-              <p className="text-2xl font-bold font-mono">{m.value}</p>
-            </Card>
+            <div key={m.label} className="glass-panel p-4.5 rounded-xl border border-white/5 bg-white/[0.01] hover:border-cyan-500/20 transition-all duration-300">
+              <p className="text-[9px] uppercase tracking-widest font-bold text-white/30 mb-2">{m.label}</p>
+              <p className="text-2xl font-extrabold font-mono text-white/90 select-all">{m.value}</p>
+            </div>
           ))}
         </div>
       )}
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-8 md:grid-cols-2">
+        {/* Readiness diagnostics */}
         <Card className="glass-panel overflow-hidden">
-          <CardHeader className="bg-white/[0.02] border-b border-white/5 pb-4">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-md bg-blue-500/10 text-blue-400">
-                <Server className="h-5 w-5" />
+          <CardHeader className="bg-white/[0.01] border-b border-white/5 pb-4 px-6 pt-6">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                <Server className="h-5 w-5 stroke-[2]" />
               </div>
-              <CardTitle className="text-lg">Runtime Readiness</CardTitle>
+              <div>
+                <CardTitle className="text-base font-bold text-white tracking-wide">Diagnostics Block</CardTitle>
+              </div>
             </div>
           </CardHeader>
           <CardContent className="p-0">
             {health ? (
-              <div className="p-4 bg-black/40"><JsonBlock value={health} /></div>
+              <div className="p-4 bg-black/40 h-[360px] overflow-auto border-t border-white/5">
+                <JsonBlock value={health} />
+              </div>
             ) : (
-              <div className="p-8 text-center text-white/40 text-sm">Click Health to load runtime state.</div>
+              <div className="p-12 text-center text-white/30 text-xs flex flex-col items-center justify-center min-h-[360px] gap-3 border border-white/5 border-dashed rounded-2xl bg-black/20 m-6">
+                <Server className="h-6 w-6 stroke-[1.5] text-white/20 animate-pulse" />
+                <p className="max-w-[200px] leading-relaxed">No local operational diagnostics loaded. Click Run Diagnostics to trigger check.</p>
+              </div>
             )}
           </CardContent>
         </Card>
 
+        {/* Live snapshot terminal output */}
         <Card className="glass-panel overflow-hidden">
-          <CardHeader className="bg-white/[0.02] border-b border-white/5 pb-4">
-            <CardTitle className="text-lg">Stream Snapshot</CardTitle>
-            <CardDescription>Latest SSE runtime data.</CardDescription>
+          <CardHeader className="bg-white/[0.01] border-b border-white/5 pb-4 px-6 pt-6">
+            <CardTitle className="text-base font-bold text-white tracking-wide">Live Stream Terminal</CardTitle>
+            <CardDescription className="text-white/40 text-xs">Latest Server-Sent Event (SSE) snapshot payload.</CardDescription>
           </CardHeader>
           <CardContent className="p-0">
             {streamSnapshot ? (
-              <pre className="p-4 bg-black/40 text-xs text-emerald-300 font-mono whitespace-pre-wrap max-h-[400px] overflow-auto">{streamSnapshot}</pre>
+              <pre className="p-5 bg-black/60 text-[10px] text-cyan-300 font-mono whitespace-pre-wrap h-[360px] overflow-auto border-t border-white/5 leading-relaxed">{streamSnapshot}</pre>
             ) : (
-              <div className="p-8 text-center text-white/40 text-sm">Open the Stream tab to pull an SSE runtime snapshot.</div>
+              <div className="p-12 text-center text-white/30 text-xs flex flex-col items-center justify-center min-h-[360px] gap-3 border border-white/5 border-dashed rounded-2xl bg-black/20 m-6 animate-pulse">
+                <Activity className="h-6 w-6 stroke-[1.5] text-white/20" />
+                <p className="max-w-[200px] leading-relaxed">SSE telemetry socket inactive. Open the STREAM dashboard panel tab to bind live socket connection.</p>
+              </div>
             )}
           </CardContent>
         </Card>

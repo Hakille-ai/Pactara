@@ -26,101 +26,107 @@ export function NetworkPanel() {
   }, [loadedGroups, markLoaded, setNetwork])
 
   return (
-    <div className="flex flex-col gap-6 w-full max-w-5xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="flex flex-col gap-8 w-full max-w-5xl animate-in fade-in slide-in-from-bottom-6 duration-700">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Network Status</h1>
-        <p className="text-muted-foreground mt-2">
-          Monitor the global state and nodes of the PACTARA network.
+        <h1 className="text-3xl font-extrabold tracking-tight text-white">
+          Network <span className="accent-text-cyan-teal">Status</span>
+        </h1>
+        <p className="text-white/40 mt-1 text-sm tracking-wide">
+          Real-time metrics, synchronized nodes, and decentralized protocol state indexes.
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
-        <Card className="glass-panel">
-          <CardHeader className="flex flex-row items-center justify-between pb-2 border-b border-white/5">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Identities</CardTitle>
-            <Server className="h-4 w-4 text-muted-foreground" />
+      <div className="grid gap-6 sm:grid-cols-2">
+        <Card className="glass-panel relative overflow-hidden bg-black/20 border border-white/5 shadow-[0_4px_24px_rgba(0,0,0,0.3)]">
+          <CardHeader className="flex flex-row items-center justify-between pb-3 px-5 pt-5 border-b border-white/5">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Total Identities</span>
+            <Server className="h-4 w-4 text-cyan-400" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-5">
             {network ? (
-              <div className="text-2xl font-bold pt-4">{network.identities}</div>
+              <div className="text-3xl font-extrabold font-mono text-white/90">{network.identities}</div>
             ) : (
-              <Skeleton className="h-8 w-16 mt-4" />
+              <Skeleton className="h-9 w-20 bg-white/5" />
             )}
           </CardContent>
         </Card>
         
-        <Card className="glass-panel">
-          <CardHeader className="flex flex-row items-center justify-between pb-2 border-b border-white/5">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Active PACTs</CardTitle>
-            <Network className="h-4 w-4 text-muted-foreground" />
+        <Card className="glass-panel relative overflow-hidden bg-black/20 border border-white/5 shadow-[0_4px_24px_rgba(0,0,0,0.3)]">
+          <CardHeader className="flex flex-row items-center justify-between pb-3 px-5 pt-5 border-b border-white/5">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Active PACTs / Total</span>
+            <Network className="h-4 w-4 text-cyan-400" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-5">
             {network ? (
-              <div className="text-2xl font-bold pt-4">{network.active_pacts} / {network.pacts}</div>
+              <div className="text-3xl font-extrabold font-mono text-white/90">
+                {network.active_pacts} <span className="text-white/30 text-lg">/ {network.pacts}</span>
+              </div>
             ) : (
-              <Skeleton className="h-8 w-24 mt-4" />
+              <Skeleton className="h-9 w-32 bg-white/5" />
             )}
           </CardContent>
         </Card>
       </div>
 
-      <Card className="glass-panel overflow-hidden">
-        <CardHeader className="bg-white/[0.02] border-b border-white/5 pb-4">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 text-primary">
-              <Network className="h-5 w-5" />
+      <Card className="glass-panel-glow overflow-hidden">
+        <CardHeader className="bg-white/[0.01] border-b border-white/5 pb-4 px-6 pt-6">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+              <Network className="h-5 w-5 stroke-[2]" />
             </div>
             <div>
-              <CardTitle className="text-xl">Network Statistics</CardTitle>
-              <CardDescription>Metrics from the decentralized protocol.</CardDescription>
+              <CardTitle className="text-base font-bold text-white tracking-wide">Network Statistics</CardTitle>
+              <CardDescription className="text-white/40 text-xs">Cryptographic metrics compiled from peer node assertions.</CardDescription>
             </div>
           </div>
         </CardHeader>
         <CardContent className="p-0">
           {!network ? (
             <div className="p-6 space-y-3">
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full bg-white/5" />
+              <Skeleton className="h-10 w-full bg-white/5" />
             </div>
           ) : (
-            <Table>
-              <TableHeader className="bg-muted/30">
-                <TableRow>
-                  <TableHead>Metric</TableHead>
-                  <TableHead className="text-right">Count</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                <TableRow>
-                  <TableCell className="font-medium">Identities</TableCell>
-                  <TableCell className="text-right font-mono text-emerald-400">{network.identities}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell className="font-medium">PACTs (Total)</TableCell>
-                  <TableCell className="text-right font-mono text-emerald-400">{network.pacts}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell className="font-medium">Active PACTs</TableCell>
-                  <TableCell className="text-right font-mono text-emerald-400">{network.active_pacts}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell className="font-medium">Revoked PACTs</TableCell>
-                  <TableCell className="text-right font-mono text-red-400">{network.revoked_pacts}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell className="font-medium">Proofs</TableCell>
-                  <TableCell className="text-right font-mono text-blue-400">{network.proofs}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell className="font-medium">Mandates</TableCell>
-                  <TableCell className="text-right font-mono text-purple-400">{network.mandates}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell className="font-medium">Genomes</TableCell>
-                  <TableCell className="text-right font-mono text-yellow-400">{network.genomes}</TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader className="bg-white/[0.01] border-b border-white/5">
+                  <TableRow className="hover:bg-transparent border-none">
+                    <TableHead className="text-[10px] font-bold uppercase tracking-widest text-white/40 h-11 px-6">Protocol Metric</TableHead>
+                    <TableHead className="text-right text-[10px] font-bold uppercase tracking-widest text-white/40 h-11 px-6">Total Asserted Count</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody className="divide-y divide-white/5">
+                  <TableRow className="hover:bg-white/[0.01] border-none transition-colors">
+                    <TableCell className="font-semibold text-xs text-white/80 h-12 px-6">Identities</TableCell>
+                    <TableCell className="text-right font-bold font-mono text-cyan-400 text-xs h-12 px-6 select-all">{network.identities}</TableCell>
+                  </TableRow>
+                  <TableRow className="hover:bg-white/[0.01] border-none transition-colors">
+                    <TableCell className="font-semibold text-xs text-white/80 h-12 px-6">PACTs (Total)</TableCell>
+                    <TableCell className="text-right font-bold font-mono text-cyan-400 text-xs h-12 px-6 select-all">{network.pacts}</TableCell>
+                  </TableRow>
+                  <TableRow className="hover:bg-white/[0.01] border-none transition-colors">
+                    <TableCell className="font-semibold text-xs text-white/80 h-12 px-6">Active PACTs</TableCell>
+                    <TableCell className="text-right font-bold font-mono text-cyan-400 text-xs h-12 px-6 select-all">{network.active_pacts}</TableCell>
+                  </TableRow>
+                  <TableRow className="hover:bg-white/[0.01] border-none transition-colors">
+                    <TableCell className="font-semibold text-xs text-white/80 h-12 px-6">Revoked PACTs</TableCell>
+                    <TableCell className="text-right font-bold font-mono text-rose-400 text-xs h-12 px-6 select-all">{network.revoked_pacts}</TableCell>
+                  </TableRow>
+                  <TableRow className="hover:bg-white/[0.01] border-none transition-colors">
+                    <TableCell className="font-semibold text-xs text-white/80 h-12 px-6">Proofs</TableCell>
+                    <TableCell className="text-right font-bold font-mono text-cyan-400 text-xs h-12 px-6 select-all">{network.proofs}</TableCell>
+                  </TableRow>
+                  <TableRow className="hover:bg-white/[0.01] border-none transition-colors">
+                    <TableCell className="font-semibold text-xs text-white/80 h-12 px-6">Mandates</TableCell>
+                    <TableCell className="text-right font-bold font-mono text-cyan-400 text-xs h-12 px-6 select-all">{network.mandates}</TableCell>
+                  </TableRow>
+                  <TableRow className="hover:bg-white/[0.01] border-none transition-colors">
+                    <TableCell className="font-semibold text-xs text-white/80 h-12 px-6">Genomes</TableCell>
+                    <TableCell className="text-right font-bold font-mono text-cyan-400 text-xs h-12 px-6 select-all">{network.genomes}</TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>

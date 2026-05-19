@@ -56,82 +56,89 @@ export function ProofPanel() {
   }
 
   return (
-    <div className="flex flex-col gap-6 w-full max-w-5xl animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Proof Registry</h1>
-        <p className="text-muted-foreground mt-2">
-          Attach cryptographically verifiable claims and attestations to existing PACTs.
-        </p>
+    <div className="flex flex-col gap-8 w-full max-w-5xl animate-in fade-in slide-in-from-bottom-6 duration-700">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-extrabold tracking-tight text-white">
+            Proof <span className="accent-text-violet-pink">Attestations</span>
+          </h1>
+          <p className="text-white/40 mt-1 text-sm tracking-wide">
+            Attach cryptographically verifiable claims, audits, and assertions to existing PACT protocol graphs.
+          </p>
+        </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card className="glass-panel">
-          <CardHeader className="bg-white/[0.02] border-b border-white/5 pb-4">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-md bg-emerald-500/10 text-emerald-400">
-                <FileCheck2 className="h-5 w-5" />
+      <div className="grid gap-8 lg:grid-cols-5 items-start">
+        {/* Left Card: Create attestation */}
+        <Card className="glass-panel-glow lg:col-span-2 overflow-hidden">
+          <CardHeader className="bg-white/[0.01] border-b border-white/5 pb-4 px-6 pt-6">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-500/10 text-violet-400 border border-violet-500/20 shadow-[0_0_16px_rgba(167,139,250,0.1)]">
+                <FileCheck2 className="h-5 w-5 stroke-[2]" />
               </div>
               <div>
-                <CardTitle className="text-lg">Create Attestation</CardTitle>
-                <CardDescription>Mint a new proof to the trust graph.</CardDescription>
+                <CardTitle className="text-lg font-bold text-white tracking-wide">Issue Attestation</CardTitle>
+                <CardDescription className="text-white/40 text-xs">Publish verifiable telemetry or payload state.</CardDescription>
               </div>
             </div>
           </CardHeader>
-          <CardContent className="p-5 space-y-4">
+          <CardContent className="p-6 space-y-5">
             <div className="space-y-2">
-              <Label className="text-white/70">Attached PACT</Label>
-              <Input value={pact?.id ?? "none"} readOnly className="glass-input font-mono text-sm opacity-70" />
+              <Label className="text-xs font-bold uppercase tracking-widest text-white/50">Target PACT Context</Label>
+              <Input value={pact?.id ?? "No PACT active - Standalone proof"} readOnly className="glass-input font-mono text-xs opacity-60 h-10 select-none bg-black/40" />
             </div>
             
             <div className="space-y-2">
-              <Label className="text-white/70">Proof Type</Label>
-              <Input value={proofType} onChange={(e) => setProofType(e.target.value)} className="glass-input" />
+              <Label className="text-xs font-bold uppercase tracking-widest text-white/50">Attestation Scheme</Label>
+              <Input value={proofType} onChange={(e) => setProofType(e.target.value)} className="glass-input h-10 focus:ring-violet-500/20" />
             </div>
 
             <div className="space-y-2">
-              <Label className="text-white/70">Payload JSON</Label>
+              <Label className="text-xs font-bold uppercase tracking-widest text-white/50">Payload Structure (JSON)</Label>
               <Textarea 
                 value={payloadJson} 
                 onChange={(e) => setPayloadJson(e.target.value)} 
-                className="glass-input font-mono text-xs min-h-[120px] resize-none" 
+                className="glass-input font-mono text-xs min-h-[140px] p-3 resize-none focus:ring-violet-500/20 bg-black/40" 
               />
             </div>
             
-            <div className="flex gap-3 mt-4">
-              <Button onClick={() => void createProof()} className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white border-none">
-                <FileCheck2 className="mr-2 h-4 w-4" /> Create Proof
+            <div className="flex gap-3 pt-2">
+              <Button onClick={() => void createProof()} className="flex-1 h-10 bg-violet-500 hover:bg-violet-600 text-black font-semibold tracking-wide border-none shadow-[0_4px_24px_rgba(167,139,250,0.25)] btn-apple-spring rounded-lg">
+                <FileCheck2 className="mr-2 h-4 w-4 stroke-[2.5]" /> Issue Proof
               </Button>
-              <Button variant="secondary" onClick={() => void refreshProofs()} className="bg-white/10 hover:bg-white/20 text-white border-none">
-                <RefreshCw className="h-4 w-4" />
+              <Button variant="secondary" onClick={() => void refreshProofs()} className="h-10 w-10 bg-white/[0.04] hover:bg-white/[0.08] text-white border border-white/5 rounded-lg shrink-0 btn-apple-spring">
+                <RefreshCw className="h-4 w-4 text-white/60" />
               </Button>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="glass-panel overflow-hidden">
-          <CardHeader className="bg-white/[0.02] border-b border-white/5 pb-4">
-            <CardTitle className="text-lg">Recent Proofs</CardTitle>
-            <CardDescription>Latest attestations on the network.</CardDescription>
+        {/* Right Card: Registry log */}
+        <Card className="glass-panel lg:col-span-3 overflow-hidden">
+          <CardHeader className="bg-white/[0.01] border-b border-white/5 pb-4 px-6 pt-6">
+            <CardTitle className="text-lg font-bold text-white tracking-wide">Registry Attestation Ledger</CardTitle>
+            <CardDescription className="text-white/40 text-xs">Latest verified digital proofs registered on this node.</CardDescription>
           </CardHeader>
           <CardContent className="p-0">
             {proofs.length === 0 ? (
-              <div className="p-8 text-center text-white/40 text-sm">
-                No proofs registered yet.
+              <div className="p-12 text-center text-white/30 text-xs flex flex-col items-center gap-3">
+                <FileCheck2 className="h-6 w-6 stroke-[1.5] text-white/20 animate-bounce" />
+                No proofs published to the local node ledger.
               </div>
             ) : (
-              <div className="divide-y divide-white/5 max-h-[400px] overflow-auto">
+              <div className="divide-y divide-white/5 max-h-[500px] overflow-y-auto scrollbar-thin scrollbar-thumb-white/5">
                 {proofs.map((proof) => (
-                  <div key={proof.id} className="p-4 hover:bg-white/[0.02] transition-colors">
-                    <div className="flex justify-between items-start mb-2">
-                      <span className="font-semibold text-sm text-emerald-400">{proof.proof_type}</span>
-                      <span className="text-xs text-white/40">{new Date(proof.created_at).toLocaleDateString()}</span>
+                  <div key={proof.id} className="p-5 hover:bg-white/[0.01] transition-all duration-300">
+                    <div className="flex items-center justify-between gap-3 mb-2.5">
+                      <span className="font-semibold text-xs tracking-wider text-violet-400 bg-violet-950/20 border border-violet-800/30 rounded px-2.5 py-0.5 shadow-inner uppercase font-mono">{proof.proof_type}</span>
+                      <span className="text-[10px] text-white/30 font-mono">{new Date(proof.created_at).toLocaleTimeString()}</span>
                     </div>
-                    <div className="text-xs text-white/60 mb-2">
-                      <span className="text-white/40">PACT: </span>
-                      <span className="font-mono">{proof.pact_id ?? "Standalone"}</span>
+                    <div className="text-[11px] text-white/50 mb-3 font-mono flex items-center gap-1.5">
+                      <span className="text-white/30">Target context:</span>
+                      <span className="bg-white/[0.03] px-1.5 py-0.5 rounded border border-white/5">{proof.pact_id ?? "Standalone Ledger Attestation"}</span>
                     </div>
-                    <div className="bg-black/30 rounded p-2 text-xs font-mono text-white/50 break-all overflow-hidden">
-                      {JSON.stringify(proof.payload)}
+                    <div className="bg-black/45 rounded-lg border border-white/5 p-3 text-[11px] font-mono text-white/70 select-all overflow-hidden shadow-inner leading-relaxed">
+                      {JSON.stringify(proof.payload, null, 2)}
                     </div>
                   </div>
                 ))}

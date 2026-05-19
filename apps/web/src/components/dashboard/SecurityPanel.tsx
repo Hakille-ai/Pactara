@@ -148,62 +148,88 @@ export function SecurityPanel() {
   }
 
   return (
-    <div className="flex flex-col gap-6 w-full max-w-5xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="flex flex-col gap-8 w-full max-w-5xl animate-in fade-in slide-in-from-bottom-6 duration-700">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Security & Audit</h1>
-        <p className="text-muted-foreground mt-2">
-          Manage credentials, passkeys, session tokens, and review protocol audit logs.
+        <h1 className="text-3xl font-extrabold tracking-tight text-white">
+          Security & <span className="accent-text-cyan-teal">Audit</span>
+        </h1>
+        <p className="text-white/40 mt-1 text-sm tracking-wide">
+          Manage passkeys, session tokens, sign simulated policy transactions, and trace decentralized node audit logs.
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card className="glass-panel">
-          <CardHeader className="bg-white/[0.02] border-b border-white/5 pb-4">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-md bg-teal-500/10 text-teal-400">
-                <KeyRound className="h-5 w-5" />
+      <div className="grid gap-8 md:grid-cols-2 items-start">
+        {/* Left Card: Authentication */}
+        <Card className="glass-panel-glow overflow-hidden">
+          <CardHeader className="bg-white/[0.01] border-b border-white/5 pb-4 px-6 pt-6">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-500/10 text-teal-400 border border-teal-500/20">
+                <KeyRound className="h-5 w-5 stroke-[2]" />
               </div>
               <div>
-                <CardTitle className="text-lg">Authentication</CardTitle>
-                <CardDescription>Manage your identity keys and passkeys.</CardDescription>
+                <CardTitle className="text-base font-bold text-white tracking-wide">Authentication Credentials</CardTitle>
+                <CardDescription className="text-white/40 text-xs">Manage public keys, biometric passkeys, and sessions.</CardDescription>
               </div>
             </div>
           </CardHeader>
-          <CardContent className="p-5 space-y-4">
-            <div className="flex flex-wrap gap-3">
-              <Button onClick={() => void startPasskey()} disabled={!identity} className="flex-1 bg-teal-500 hover:bg-teal-600 text-white border-none">
-                <KeyRound className="mr-2 h-4 w-4" /> Start Passkey
+          <CardContent className="p-6 space-y-5">
+            <div className="flex flex-col sm:flex-row gap-3.5">
+              <Button 
+                onClick={() => void startPasskey()} 
+                disabled={!identity} 
+                className="flex-1 h-10 bg-teal-500 hover:bg-teal-600 text-white font-semibold tracking-wide border-none shadow-[0_4px_24px_rgba(20,184,166,0.25)] rounded-lg btn-apple-spring transition-all duration-300 pt-0.5"
+              >
+                <KeyRound className="mr-2 h-4 w-4 stroke-[2.5]" /> Start Passkey
               </Button>
-              <Button variant="secondary" onClick={() => void finishPasskey()} disabled={!identity || !authChallenge} className="flex-1 bg-white/10 hover:bg-white/20 text-white border-none">
-                <BadgeCheck className="mr-2 h-4 w-4" /> Store Key
+              <Button 
+                variant="secondary" 
+                onClick={() => void finishPasskey()} 
+                disabled={!identity || !authChallenge} 
+                className="flex-1 h-10 bg-white/[0.04] hover:bg-white/[0.08] text-white border border-white/5 btn-apple-spring rounded-lg font-semibold tracking-wide"
+              >
+                <BadgeCheck className="mr-2 h-4 w-4 text-teal-400 stroke-[2]" /> Store Passkey
               </Button>
             </div>
             
-            <div className="flex flex-wrap gap-3 mt-4 border-t border-white/5 pt-4">
-              <Button variant="secondary" onClick={() => void createDevSession()} disabled={!identity} className="flex-1 bg-white/10 hover:bg-white/20 text-white border-none text-xs">
-                <Activity className="mr-2 h-4 w-4" /> Dev Session
+            <div className="flex flex-col sm:flex-row gap-3.5 pt-4 border-t border-white/5">
+              <Button 
+                variant="secondary" 
+                onClick={() => void createDevSession()} 
+                disabled={!identity} 
+                className="flex-1 h-10 bg-white/[0.04] hover:bg-white/[0.08] text-white border border-white/5 btn-apple-spring rounded-lg text-xs font-semibold tracking-wide"
+              >
+                <Activity className="mr-2 h-4 w-4 text-cyan-400 stroke-[2]" /> Generate Dev Session
               </Button>
-              <Button variant="secondary" onClick={() => void refreshCredentials()} className="flex-1 bg-white/10 hover:bg-white/20 text-white border-none text-xs">
-                <RefreshCw className="mr-2 h-4 w-4" /> Sync Keys
+              <Button 
+                variant="secondary" 
+                onClick={() => void refreshCredentials()} 
+                className="flex-1 h-10 bg-white/[0.04] hover:bg-white/[0.08] text-white border border-white/5 btn-apple-spring rounded-lg text-xs font-semibold tracking-wide"
+              >
+                <RefreshCw className="mr-2 h-4 w-4 text-cyan-400 stroke-[2]" /> Synchronize Keys
               </Button>
             </div>
             
             {credentials.length > 0 && (
-              <div className="mt-4 border-t border-white/5 pt-4 space-y-2">
-                <Label className="text-white/70">Revoke Credential</Label>
-                <div className="flex gap-2">
+              <div className="pt-4 border-t border-white/5 space-y-2.5">
+                <Label className="text-xs font-bold uppercase tracking-widest text-white/50">Revoke Authorization Link</Label>
+                <div className="flex gap-2.5">
                   <Select value={deleteCredentialId} onValueChange={(v) => setDeleteCredentialId(v || "")}>
-                    <SelectTrigger className="glass-input flex-1">
+                    <SelectTrigger className="glass-input flex-1 h-10">
                       <SelectValue placeholder="Select credential" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-[#0b0b0b] border-white/10 text-white">
                       {credentials.map((item) => (
-                        <SelectItem key={item.id} value={item.id}>{item.credential_id}</SelectItem>
+                        <SelectItem key={item.id} value={item.id} className="focus:bg-white/5 hover:bg-white/5 transition-colors">{item.credential_id}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  <Button variant="destructive" onClick={() => void deleteCredential()} disabled={!deleteCredentialId} className="bg-red-500/20 text-red-500 hover:bg-red-500/30 border-none">
-                    <XCircle className="h-4 w-4" />
+                  <Button 
+                    variant="destructive" 
+                    onClick={() => void deleteCredential()} 
+                    disabled={!deleteCredentialId} 
+                    className="bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 border border-rose-500/20 h-10 w-10 shrink-0 p-0 flex items-center justify-center rounded-lg transition-all duration-300"
+                  >
+                    <XCircle className="h-5 w-5 stroke-[2]" />
                   </Button>
                 </div>
               </div>
@@ -211,46 +237,55 @@ export function SecurityPanel() {
           </CardContent>
         </Card>
 
-        <Card className="glass-panel">
-          <CardHeader className="bg-white/[0.02] border-b border-white/5 pb-4">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-md bg-blue-500/10 text-blue-400">
-                <ShieldCheck className="h-5 w-5" />
+        {/* Right Card: Policy Evaluation */}
+        <Card className="glass-panel overflow-hidden">
+          <CardHeader className="bg-white/[0.01] border-b border-white/5 pb-4 px-6 pt-6">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 animate-pulse">
+                <ShieldCheck className="h-5 w-5 stroke-[2]" />
               </div>
               <div>
-                <CardTitle className="text-lg">Policy Verification</CardTitle>
-                <CardDescription>Simulate action policy evaluations.</CardDescription>
+                <CardTitle className="text-base font-bold text-white tracking-wide">Policy Sandbox Simulator</CardTitle>
+                <CardDescription className="text-white/40 text-xs">Simulate dynamic action and role policy checks.</CardDescription>
               </div>
             </div>
           </CardHeader>
-          <CardContent className="p-5 space-y-4">
+          <CardContent className="p-6 space-y-5">
             <div className="space-y-2">
-              <Label className="text-white/70">Simulated Action</Label>
-              <Input value={policyAction} onChange={(e) => setPolicyAction(e.target.value)} className="glass-input" />
+              <Label className="text-xs font-bold uppercase tracking-widest text-white/50">Simulated Action Verb</Label>
+              <Input value={policyAction} onChange={(e) => setPolicyAction(e.target.value)} className="glass-input h-10 px-3.5 focus:ring-blue-500/20 font-mono text-xs" />
             </div>
             
-            <div className="flex gap-3">
-              <Button onClick={() => void evaluateSecurityPolicy()} className="flex-1 bg-blue-500 hover:bg-blue-600 text-white border-none">
-                <ShieldCheck className="mr-2 h-4 w-4" /> Evaluate
+            <div className="flex flex-col sm:flex-row gap-3.5">
+              <Button 
+                onClick={() => void evaluateSecurityPolicy()} 
+                className="flex-1 h-10 bg-blue-500 hover:bg-blue-600 text-white font-semibold tracking-wide border-none shadow-[0_4px_24px_rgba(59,130,246,0.25)] rounded-lg btn-apple-spring transition-all duration-300 pt-0.5"
+              >
+                <ShieldCheck className="mr-2 h-4 w-4 stroke-[2.5]" /> Run Policy Check
               </Button>
-              <Button variant="secondary" onClick={() => void verifySignedRequestDemo()} disabled={!identity} className="flex-1 bg-white/10 hover:bg-white/20 text-white border-none">
-                <ShieldCheck className="mr-2 h-4 w-4" /> Check Sign
+              <Button 
+                variant="secondary" 
+                onClick={() => void verifySignedRequestDemo()} 
+                disabled={!identity} 
+                className="flex-1 h-10 bg-white/[0.04] hover:bg-white/[0.08] text-white border border-white/5 btn-apple-spring rounded-lg font-semibold tracking-wide"
+              >
+                <ShieldCheck className="mr-2 h-4 w-4 text-blue-400 stroke-[2]" /> Check Cryptography
               </Button>
             </div>
 
             {policyDecision && (
-              <div className="mt-4 pt-4 border-t border-white/5">
-                <p className="text-sm font-medium text-white/70 mb-2">Evaluation Result</p>
-                <div className={`p-3 rounded-lg border flex items-center justify-between ${
-                  policyDecision.decision === 'allow' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' :
-                  policyDecision.decision === 'needs_review' ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' :
-                  'bg-red-500/10 border-red-500/20 text-red-400'
+              <div className="pt-4 border-t border-white/5 space-y-2.5 animate-in fade-in zoom-in-95 duration-500">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-white/30 px-1">Simulator Verification Block</span>
+                <div className={`p-4.5 rounded-xl border flex items-center justify-between shadow-[0_4px_24px_rgba(0,0,0,0.3)] ${
+                  policyDecision.decision === 'allow' ? 'bg-emerald-500/[0.02] border-emerald-500/20 text-emerald-400' :
+                  policyDecision.decision === 'needs_review' ? 'bg-amber-500/[0.02] border-amber-500/20 text-amber-400' :
+                  'bg-rose-500/[0.02] border-rose-500/20 text-rose-400'
                 }`}>
-                  <div className="flex items-center gap-2 font-bold uppercase text-sm">
-                    {policyDecision.decision === 'allow' ? <CheckCircle2 className="h-4 w-4" /> : <AlertTriangle className="h-4 w-4" />}
+                  <div className="flex items-center gap-2.5 font-bold uppercase text-xs tracking-wider">
+                    {policyDecision.decision === 'allow' ? <CheckCircle2 className="h-4.5 w-4.5 stroke-[2.5]" /> : <AlertTriangle className="h-4.5 w-4.5 stroke-[2.5]" />}
                     {policyDecision.decision.replace('_', ' ')}
                   </div>
-                  <span className="text-xs font-mono opacity-60">
+                  <span className="text-[10px] font-mono opacity-70 tracking-wide bg-white/5 border border-white/10 px-2.5 py-1 rounded-full">
                     {policyDecision.reasons.join(', ') || 'default'}
                   </span>
                 </div>
@@ -260,49 +295,78 @@ export function SecurityPanel() {
         </Card>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-8 md:grid-cols-2 items-start">
+        {/* Logs */}
         {(authChallenge || credential || authSession || signedVerification) && (
-          <Card className="glass-panel overflow-hidden animate-in fade-in slide-in-from-bottom-2">
-            <CardHeader className="bg-white/[0.02] border-b border-white/5 pb-4">
-              <CardTitle className="text-lg">Security Logs</CardTitle>
+          <Card className="glass-panel overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-500">
+            <CardHeader className="bg-white/[0.01] border-b border-white/5 pb-4 px-6 pt-6">
+              <CardTitle className="text-base font-bold text-white tracking-wide">Credential Raw Payload Logs</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="p-4 bg-black/40 max-h-[400px] overflow-auto border-t border-white/5 space-y-4">
-                {authChallenge && <div><p className="text-xs text-white/50 mb-1">Challenge</p><JsonBlock value={authChallenge} /></div>}
-                {credential && <div><p className="text-xs text-white/50 mb-1">Credential</p><JsonBlock value={credential} /></div>}
-                {authSession && <div><p className="text-xs text-white/50 mb-1">Session</p><JsonBlock value={authSession} /></div>}
-                {signedVerification && <div><p className="text-xs text-white/50 mb-1">Signed Request</p><JsonBlock value={signedVerification} /></div>}
+              <div className="p-5 bg-black/60 max-h-[380px] overflow-auto border-t border-white/5 space-y-5">
+                {authChallenge && (
+                  <div className="space-y-2">
+                    <span className="text-[9px] font-extrabold uppercase tracking-widest text-white/30">Active Challenge payload</span>
+                    <JsonBlock value={authChallenge} />
+                  </div>
+                )}
+                {credential && (
+                  <div className="space-y-2">
+                    <span className="text-[9px] font-extrabold uppercase tracking-widest text-white/30">Active Credential stored</span>
+                    <JsonBlock value={credential} />
+                  </div>
+                )}
+                {authSession && (
+                  <div className="space-y-2">
+                    <span className="text-[9px] font-extrabold uppercase tracking-widest text-white/30">Active Session state</span>
+                    <JsonBlock value={authSession} />
+                  </div>
+                )}
+                {signedVerification && (
+                  <div className="space-y-2">
+                    <span className="text-[9px] font-extrabold uppercase tracking-widest text-white/30">Signature Verification details</span>
+                    <JsonBlock value={signedVerification} />
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
         )}
 
+        {/* Audit Trail */}
         <Card className="glass-panel overflow-hidden">
-          <CardHeader className="bg-white/[0.02] border-b border-white/5 pb-4">
-            <CardTitle className="text-lg">Audit Trail</CardTitle>
-            <CardDescription>Immutable record of critical security events.</CardDescription>
+          <CardHeader className="bg-white/[0.01] border-b border-white/5 pb-4 px-6 pt-6">
+            <CardTitle className="text-base font-bold text-white tracking-wide">Local Node Audit Trail</CardTitle>
+            <CardDescription className="text-white/40 text-xs">Immutable cryptographic record of critical security assertions.</CardDescription>
           </CardHeader>
           <CardContent className="p-0">
             {auditEvents.length === 0 ? (
-              <div className="p-8 text-center text-white/40 text-sm">
-                No audit events recorded.
+              <div className="p-16 text-center flex flex-col items-center justify-center min-h-[300px] gap-2 border border-white/5 border-dashed rounded-xl bg-black/20 m-6">
+                <ShieldCheck className="h-6 w-6 text-white/20 animate-pulse" />
+                <p className="text-xs text-white/30">No security audit event assertions generated yet.</p>
               </div>
             ) : (
-              <div className="divide-y divide-white/5 max-h-[400px] overflow-auto">
+              <div className="divide-y divide-white/5 max-h-[380px] overflow-auto">
                 {auditEvents.map((event, index) => (
-                  <div key={index} className="p-4 hover:bg-white/[0.02] transition-colors">
-                    <div className="flex justify-between items-start mb-2">
-                      <span className="font-semibold text-sm text-blue-400">{event.event_type}</span>
+                  <div key={index} className="p-5 hover:bg-white/[0.01] transition-all duration-300 relative group">
+                    <div className="flex justify-between items-center mb-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className="status-led status-led-blue scale-75" />
+                        <span className="font-bold text-xs text-white/90 select-all tracking-wide">{event.event_type}</span>
+                      </div>
+                      {event.decision && (
+                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider ${
+                          event.decision === 'allow' 
+                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
+                            : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                        }`}>
+                          {event.decision}
+                        </span>
+                      )}
                     </div>
-                    <div className="text-xs text-white/60 mb-2 font-mono break-all">
-                      <span className="text-white/40">Subject: </span>
-                      {event.subject_id}
-                    </div>
-                    {event.decision && (
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-white/10 text-white/70">
-                        {event.decision}
-                      </span>
-                    )}
+                    <p className="text-[10px] text-white/30 font-mono break-all select-all leading-normal">
+                      Subject: {event.subject_id}
+                    </p>
                   </div>
                 ))}
               </div>

@@ -80,24 +80,27 @@ export function AppSidebar() {
   const { view, setView } = useAppStore()
 
   return (
-    <Sidebar className="border-r border-white/5 bg-black/40 backdrop-blur-2xl">
-      <SidebarHeader className="flex h-14 items-center border-b border-white/5 px-4">
-        <div className="flex items-center gap-2 font-semibold tracking-tight">
-          <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
-            <Box className="h-4 w-4" />
+    <Sidebar className="border-r border-white/5 bg-[#050505]/60 backdrop-blur-3xl">
+      <SidebarHeader className="flex h-16 items-center border-b border-white/5 px-6">
+        <div className="flex items-center gap-3 font-semibold tracking-tight">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-teal-400 to-cyan-500 text-black shadow-[0_0_24px_rgba(45,212,191,0.25)]">
+            <Box className="h-4 w-4 stroke-[2.5]" />
           </div>
-          Pactara Protocol
+          <div className="flex flex-col">
+            <span className="text-sm font-bold text-white tracking-wide">PACTARA</span>
+            <span className="text-[9px] uppercase tracking-widest text-teal-400 font-bold -mt-0.5">PROTOCOL</span>
+          </div>
         </div>
       </SidebarHeader>
       
-      <SidebarContent className="scrollbar-none">
+      <SidebarContent className="scrollbar-none px-2 py-4 space-y-4">
         {navGroups.map((group) => (
-          <SidebarGroup key={group.label}>
-            <SidebarGroupLabel className="text-xs font-medium uppercase tracking-wider text-muted-foreground/70">
+          <SidebarGroup key={group.label} className="p-0">
+            <SidebarGroupLabel className="text-[10px] font-bold uppercase tracking-widest text-white/30 px-4 mb-1.5">
               {group.label}
             </SidebarGroupLabel>
             <SidebarGroupContent>
-              <SidebarMenu>
+              <SidebarMenu className="gap-1">
                 {group.items.map((item) => {
                   const Icon = item.icon
                   const isActive = view === item.id
@@ -106,14 +109,16 @@ export function AppSidebar() {
                       <SidebarMenuButton 
                         isActive={isActive} 
                         onClick={() => setView(item.id)}
-                        className={`transition-all duration-300 ${
+                        className={`transition-all duration-300 rounded-lg px-4 h-9 btn-apple-spring ${
                           isActive 
-                            ? "bg-white/10 font-medium text-white shadow-sm" 
-                            : "text-white/60 hover:bg-white/5 hover:text-white"
+                            ? "bg-white/[0.07] font-semibold text-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.1),0_8px_16px_rgba(0,0,0,0.4)] border border-white/5" 
+                            : "text-white/50 hover:bg-white/[0.03] hover:text-white border border-transparent"
                         }`}
                       >
-                        <Icon className={`mr-2 h-4 w-4 ${isActive ? "text-white" : "text-white/60"}`} />
-                        <span>{item.label}</span>
+                        <Icon className={`mr-2.5 h-4 w-4 transition-transform duration-300 group-hover:scale-110 ${
+                          isActive ? "text-teal-400 stroke-[2]" : "text-white/40"
+                        }`} />
+                        <span className="text-xs tracking-wide">{item.label}</span>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   )
@@ -123,10 +128,13 @@ export function AppSidebar() {
           </SidebarGroup>
         ))}
       </SidebarContent>
-      <SidebarFooter className="border-t border-border/40 p-4">
-        <div className="flex flex-col gap-1 text-xs text-muted-foreground/60">
-          <p>Pactara Web Console</p>
-          <p>v0.1.0-alpha</p>
+      <SidebarFooter className="border-t border-white/5 p-4 bg-black/10">
+        <div className="flex items-center gap-3">
+          <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+          <div className="flex flex-col text-[10px] text-white/40 font-mono">
+            <span className="font-semibold text-white/60">NODE: ONLINE</span>
+            <span>v0.5.0-mock</span>
+          </div>
         </div>
       </SidebarFooter>
     </Sidebar>

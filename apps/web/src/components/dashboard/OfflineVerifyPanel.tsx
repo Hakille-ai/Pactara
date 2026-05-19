@@ -33,61 +33,117 @@ export function OfflineVerifyPanel() {
   }
 
   return (
-    <div className="flex flex-col gap-6 w-full max-w-5xl animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Offline Verification</h1>
-        <p className="text-muted-foreground mt-2">
-          Verify a PACT bundle cryptographically without any database lookup.
-        </p>
+    <div className="flex flex-col gap-8 w-full max-w-5xl animate-in fade-in slide-in-from-bottom-6 duration-700">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-extrabold tracking-tight text-white">
+            Offline <span className="accent-text-cyan-teal">Verification</span>
+          </h1>
+          <p className="text-white/40 mt-1 text-sm tracking-wide">
+            Verify a portable PACT bundle cryptographically without relying on active network consensus lookup.
+          </p>
+        </div>
       </div>
 
-      <Card className="glass-panel">
-        <CardHeader className="bg-white/[0.02] border-b border-white/5 pb-4">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-teal-500/10 text-teal-400">
-              <BadgeCheck className="h-5 w-5" />
-            </div>
-            <CardTitle className="text-lg">Bundle Input</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent className="p-5 space-y-4">
-          <div className="space-y-2">
-            <Label className="text-white/70">PACT Bundle JSON</Label>
-            <Textarea value={bundleJson} onChange={(e) => setBundleJson(e.target.value)} className="glass-input font-mono text-xs min-h-[280px] resize-none" />
-          </div>
-          <div className="flex gap-3">
-            <Button onClick={() => void verifyOfflineBundle()} disabled={!bundleJson} className="flex-1 bg-teal-500 hover:bg-teal-600 text-white border-none">
-              <BadgeCheck className="mr-2 h-4 w-4" /> Verify Bundle
-            </Button>
-            <Button variant="secondary" onClick={() => setBundleJson(bundle ? JSON.stringify(bundle, null, 2) : "")} disabled={!bundle} className="bg-white/10 hover:bg-white/20 text-white border-none">
-              <QrCode className="mr-2 h-4 w-4" /> Use Current
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {offlineVerification && (
-        <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
-          <div className="grid gap-4 sm:grid-cols-4">
-            <Card className={`glass-panel p-4 border-l-4 ${offlineVerification.valid ? 'border-l-emerald-500' : 'border-l-red-500'}`}>
-              <p className="text-sm text-white/50 mb-1">Integrity</p>
-              <div className="flex items-center gap-2">
-                {offlineVerification.valid ? <ShieldCheck className="h-5 w-5 text-emerald-500" /> : <AlertTriangle className="h-5 w-5 text-red-500" />}
-                <p className="text-xl font-bold">{offlineVerification.valid ? "Valid" : "Invalid"}</p>
+      <div className="grid gap-8 lg:grid-cols-5 items-start">
+        {/* Left: Input Payload */}
+        <Card className="glass-panel-glow lg:col-span-3 overflow-hidden">
+          <CardHeader className="bg-white/[0.01] border-b border-white/5 pb-4 px-6 pt-6">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                <BadgeCheck className="h-5 w-5 stroke-[2]" />
               </div>
-            </Card>
-            <Card className="glass-panel p-4"><p className="text-sm text-white/50 mb-1">Proofs</p><p className="text-2xl font-bold font-mono">{offlineVerification.proofs_count}</p></Card>
-            <Card className="glass-panel p-4"><p className="text-sm text-white/50 mb-1">Timeline Events</p><p className="text-2xl font-bold font-mono">{offlineVerification.timeline_events}</p></Card>
-            <Card className={`glass-panel p-4 border-l-4 ${offlineVerification.revoked ? 'border-l-red-500' : 'border-l-emerald-500'}`}>
-              <p className="text-sm text-white/50 mb-1">Revoked</p>
-              <p className={`text-xl font-bold ${offlineVerification.revoked ? 'text-red-400' : 'text-emerald-400'}`}>{offlineVerification.revoked ? "Yes" : "No"}</p>
-            </Card>
-          </div>
-          <Card className="glass-panel overflow-hidden">
-            <CardContent className="p-0"><div className="p-4 bg-black/40"><JsonBlock value={offlineVerification} /></div></CardContent>
-          </Card>
+              <div>
+                <CardTitle className="text-base font-bold text-white tracking-wide">Portable Bundle Manifest</CardTitle>
+                <CardDescription className="text-white/40 text-xs">Verify signature validity and cryptographic proof.</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="p-6 space-y-5">
+            <div className="space-y-2">
+              <Label className="text-xs font-bold uppercase tracking-widest text-white/50">PACT Bundle JSON Input</Label>
+              <Textarea 
+                value={bundleJson} 
+                onChange={(e) => setBundleJson(e.target.value)} 
+                className="glass-input min-h-[220px] p-3.5 resize-none focus:ring-cyan-500/20 font-mono text-xs bg-black/40" 
+              />
+            </div>
+            
+            <div className="flex gap-4 pt-2">
+              <Button 
+                onClick={() => void verifyOfflineBundle()} 
+                disabled={!bundleJson} 
+                className="flex-[2] h-10 bg-cyan-500 hover:bg-cyan-600 text-black font-semibold tracking-wide border-none shadow-[0_4px_24px_rgba(6,182,212,0.25)] rounded-lg btn-apple-spring transition-all duration-300 pt-0.5"
+              >
+                <BadgeCheck className="mr-2 h-4 w-4 stroke-[2.5]" /> Run Offline Verification
+              </Button>
+              <Button 
+                variant="secondary" 
+                onClick={() => setBundleJson(bundle ? JSON.stringify(bundle, null, 2) : "")} 
+                disabled={!bundle} 
+                className="flex-1 h-10 bg-white/[0.04] hover:bg-white/[0.08] text-white border border-white/5 rounded-lg btn-apple-spring text-xs"
+              >
+                <QrCode className="mr-2 h-4 w-4 stroke-[2]" /> Load Current
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Right: Verification Output */}
+        <div className="lg:col-span-2 space-y-6">
+          {offlineVerification ? (
+            <div className="space-y-6 animate-in fade-in zoom-in-95 duration-500">
+              <div className="grid gap-4 grid-cols-2">
+                <div className={`glass-panel p-4.5 rounded-xl border relative overflow-hidden bg-black/20 ${
+                  offlineVerification.valid 
+                    ? 'border-emerald-500/20 shadow-[0_4px_20px_rgba(16,185,129,0.06)]' 
+                    : 'border-rose-500/20 shadow-[0_4px_20px_rgba(244,63,94,0.06)]'
+                }`}>
+                  <p className="text-[9px] uppercase tracking-wider font-bold text-white/30 mb-1">Integrity</p>
+                  <div className="flex items-center gap-1.5 mt-2">
+                    <span className={`status-led ${offlineVerification.valid ? 'status-led-green' : 'status-led-rose'} scale-90`} />
+                    <p className={`text-base font-extrabold tracking-wide ${offlineVerification.valid ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      {offlineVerification.valid ? "VALID SEAL" : "CORRUPTED"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="glass-panel p-4.5 rounded-xl border border-white/5 bg-black/20">
+                  <p className="text-[9px] uppercase tracking-wider font-bold text-white/30 mb-1">Proofs Count</p>
+                  <p className="text-xl font-extrabold font-mono text-cyan-300 mt-2">{offlineVerification.proofs_count}</p>
+                </div>
+
+                <div className="glass-panel p-4.5 rounded-xl border border-white/5 bg-black/20">
+                  <p className="text-[9px] uppercase tracking-wider font-bold text-white/30 mb-1">Timeline Events</p>
+                  <p className="text-xl font-extrabold font-mono text-cyan-300 mt-2">{offlineVerification.timeline_events}</p>
+                </div>
+
+                <div className={`glass-panel p-4.5 rounded-xl border relative overflow-hidden bg-black/20 ${
+                  offlineVerification.revoked 
+                    ? 'border-rose-500/20 shadow-[0_4px_20px_rgba(244,63,94,0.06)]' 
+                    : 'border-emerald-500/20 shadow-[0_4px_20px_rgba(16,185,129,0.06)]'
+                }`}>
+                  <p className="text-[9px] uppercase tracking-wider font-bold text-white/30 mb-1">Revoked Status</p>
+                  <p className={`text-base font-extrabold tracking-wide mt-2 ${offlineVerification.revoked ? 'text-rose-400' : 'text-emerald-400'}`}>
+                    {offlineVerification.revoked ? "REVOKED" : "ACTIVE"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Raw Details JsonBlock */}
+              <div className="space-y-2">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-white/30 px-1">Raw verification proof</span>
+                <JsonBlock value={offlineVerification} />
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-white/5 bg-[#080808]/60 p-8 text-center flex flex-col items-center justify-center min-h-[260px] text-white/30 gap-3 border-dashed">
+              <ShieldCheck className="h-8 w-8 stroke-[1.5] text-white/20 animate-pulse" />
+              <p className="text-xs max-w-[200px] leading-relaxed">Verification logs are empty. Submit a portable PACT bundle to evaluate.</p>
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   )
 }

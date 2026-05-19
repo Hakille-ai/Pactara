@@ -1,40 +1,50 @@
-import { Activity, RefreshCw } from "lucide-react"
+import { Activity, RefreshCw, Cpu, Database, Network } from "lucide-react"
 import { useAppStore } from "@/store/useAppStore"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 
 export function AppHeader({ onRefreshHealth }: { onRefreshHealth: () => void }) {
-  const { health } = useAppStore()
+  const { health, runtimeHealth } = useAppStore()
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-white/5 bg-black/20 px-4 backdrop-blur-2xl transition-all">
+    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-white/5 bg-[#050505]/40 px-6 backdrop-blur-3xl transition-all">
       <div className="flex items-center gap-4">
-        <SidebarTrigger className="-ml-1 text-white/70 hover:text-white" />
+        <SidebarTrigger className="-ml-1 text-white/50 hover:text-white transition-colors" />
         <div className="flex items-center gap-2">
-          <h2 className="text-sm font-medium capitalize tracking-wide text-white/90">
-            {useAppStore((s) => s.view)} Console
+          <h2 className="text-sm font-semibold capitalize tracking-wider text-white/90 font-mono">
+            // {useAppStore((s) => s.view)} console
           </h2>
         </div>
       </div>
       
       <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2 rounded-full border border-border/50 bg-muted/30 px-3 py-1.5 shadow-sm transition-colors hover:bg-muted/50">
-          <Activity 
-            className={`h-4 w-4 ${health === "ok" ? "text-emerald-500" : "text-amber-500 animate-pulse"}`} 
-          />
-          <div className="flex flex-col">
-            <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/70 leading-none">Status</span>
-            <span className="text-xs font-semibold text-foreground capitalize leading-tight">{health}</span>
+        {/* Dynamic active indicators */}
+        <div className="hidden md:flex items-center gap-6 text-xs text-white/40 mr-2">
+          <div className="flex items-center gap-1.5 font-mono">
+            <Cpu className="h-3.5 w-3.5 text-teal-500/70" />
+            <span>SANDBOX: READY</span>
+          </div>
+          <div className="flex items-center gap-1.5 font-mono">
+            <Database className="h-3.5 w-3.5 text-cyan-500/70" />
+            <span>DB: {runtimeHealth?.database ? "CONNECTED" : "MOCKED"}</span>
+          </div>
+        </div>
+
+        {/* Apple style Status Badge */}
+        <div className="flex items-center gap-3 rounded-full border border-white/5 bg-white/[0.02] pl-3.5 pr-1.5 py-1 shadow-[0_4px_16px_rgba(0,0,0,0.2)] hover:bg-white/[0.04] transition-all">
+          <span className={`status-led ${health === "ok" ? "status-led-green" : "status-led-amber"}`} />
+          <div className="flex flex-col text-left select-none">
+            <span className="text-[8px] font-bold uppercase tracking-widest text-white/30 leading-none">NETWORK</span>
+            <span className="text-xs font-semibold text-white/80 capitalize leading-tight mt-0.5">{health === "ok" ? "Connected" : "Warning"}</span>
           </div>
           <Button 
             variant="ghost" 
             size="icon" 
-            className="ml-1 h-6 w-6 rounded-full hover:bg-background"
+            className="ml-1 h-6 w-6 rounded-full hover:bg-white/10 btn-apple-spring"
             onClick={onRefreshHealth}
             title="Refresh Status"
           >
-            <RefreshCw className="h-3.5 w-3.5 text-muted-foreground" />
+            <RefreshCw className="h-3 w-3 text-white/60 hover:text-white transition-colors" />
           </Button>
         </div>
       </div>

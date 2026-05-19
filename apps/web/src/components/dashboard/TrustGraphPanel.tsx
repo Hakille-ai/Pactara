@@ -35,88 +35,101 @@ export function TrustGraphPanel() {
   }
 
   return (
-    <div className="flex flex-col gap-6 w-full max-w-5xl animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex items-center justify-between">
+    <div className="flex flex-col gap-8 w-full max-w-5xl animate-in fade-in slide-in-from-bottom-6 duration-700">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Trust Graph</h1>
-          <p className="text-muted-foreground mt-2">
-            Visualize decentralized relationships and cryptographic edges across the protocol.
+          <h1 className="text-3xl font-extrabold tracking-tight text-white">
+            Cryptographic <span className="accent-text-cyan-teal">Trust Graph</span>
+          </h1>
+          <p className="text-white/40 mt-1 text-sm tracking-wide">
+            Inspect decentralized relationships, agent links, and verifiable credentials.
           </p>
         </div>
-        <Button onClick={() => void refreshTrustGraph()} variant="secondary" className="bg-white/10 hover:bg-white/20 text-white border-none">
-          <RefreshCw className="mr-2 h-4 w-4" /> Refresh Graph
+        <Button 
+          onClick={() => void refreshTrustGraph()} 
+          variant="secondary" 
+          className="bg-white/[0.04] hover:bg-white/[0.08] text-white border border-white/5 btn-apple-spring h-10 px-5 rounded-lg shrink-0"
+        >
+          <RefreshCw className="mr-2 h-4 w-4 text-cyan-400" /> Refresh Trust Graph
         </Button>
       </div>
 
       {!graph ? (
-        <Card className="glass-panel border-dashed border-white/10 bg-white/[0.01]">
+        <Card className="glass-panel-glow border-dashed border-white/10 bg-white/[0.01] overflow-hidden">
           <CardContent className="p-12 flex flex-col items-center justify-center text-center">
-             <div className="h-16 w-16 rounded-2xl bg-white/5 flex items-center justify-center mb-4">
-              <Network className="h-8 w-8 text-white/40" />
+             <div className="h-16 w-16 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 shadow-[0_0_24px_rgba(6,182,212,0.15)] flex items-center justify-center mb-5 animate-pulse">
+              <Network className="h-8 w-8 text-cyan-400 stroke-[1.5]" />
             </div>
-            <p className="text-white/40 mb-4 max-w-sm">Load the global trust graph to view node connectivity and semantic relationships.</p>
-            <Button onClick={() => void refreshTrustGraph()} className="bg-indigo-500 hover:bg-indigo-600 text-white border-none">
-              <Network className="mr-2 h-4 w-4" /> Load Protocol Graph
+            <p className="text-white/40 mb-5 max-w-sm text-xs leading-relaxed">Load the global semantic trust graph to visualize real-time peer relations and mandate delegations.</p>
+            <Button 
+              onClick={() => void refreshTrustGraph()} 
+              className="h-10 bg-cyan-500 hover:bg-cyan-600 text-black font-semibold tracking-wide border-none shadow-[0_4px_24px_rgba(6,182,212,0.25)] rounded-lg btn-apple-spring transition-all duration-300 pt-0.5"
+            >
+              <Network className="mr-2 h-4 w-4 stroke-[2]" /> Load Decentralized Graph
             </Button>
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-6">
-          <div className="grid gap-4 sm:grid-cols-3 animate-in fade-in slide-in-from-bottom-2">
-            <Card className="glass-panel p-4 flex flex-col justify-center border-l-4 border-l-indigo-500">
-              <p className="text-sm text-white/50 mb-1">Total Nodes</p>
-              <p className="text-3xl font-bold font-mono">{graph.nodes.length}</p>
-            </Card>
-            <Card className="glass-panel p-4 flex flex-col justify-center border-l-4 border-l-purple-500">
-              <p className="text-sm text-white/50 mb-1">Semantic Edges</p>
-              <p className="text-3xl font-bold font-mono">{graph.edges.length}</p>
-            </Card>
-            <Card className="glass-panel p-4 flex flex-col justify-center border-l-4 border-l-pink-500">
-              <p className="text-sm text-white/50 mb-1">Entity Types</p>
-              <p className="text-3xl font-bold font-mono">{typeCounts.length}</p>
-            </Card>
+        <div className="space-y-8">
+          {/* Node Summary Metrics */}
+          <div className="grid gap-6 sm:grid-cols-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
+            <div className="glass-panel p-5 flex flex-col justify-center border-l-4 border-l-cyan-500 rounded-xl relative overflow-hidden bg-black/20 shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-1">Total Identity Nodes</p>
+              <p className="text-3xl font-extrabold font-mono text-white/90">{graph.nodes.length}</p>
+            </div>
+            <div className="glass-panel p-5 flex flex-col justify-center border-l-4 border-l-amber-500 rounded-xl relative overflow-hidden bg-black/20 shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-1">Active Mandate Edges</p>
+              <p className="text-3xl font-extrabold font-mono text-white/90">{graph.edges.length}</p>
+            </div>
+            <div className="glass-panel p-5 flex flex-col justify-center border-l-4 border-l-pink-500 rounded-xl relative overflow-hidden bg-black/20 shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-1">Unique Space Categories</p>
+              <p className="text-3xl font-extrabold font-mono text-white/90">{typeCounts.length}</p>
+            </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 animate-in fade-in slide-in-from-bottom-3">
+          {/* Categorized Breakdown Blocks */}
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 animate-in fade-in slide-in-from-bottom-3 duration-500">
             {typeCounts.map(([type, count]) => (
-              <Card key={type} className="glass-panel p-4 flex flex-col border border-white/5 bg-white/[0.02]">
-                <div className="flex items-center gap-2 mb-2 text-indigo-400">
-                  <Hexagon className="h-4 w-4" />
-                  <p className="text-[11px] uppercase tracking-wider font-semibold truncate">{type}</p>
+              <div key={type} className="glass-panel p-4 flex flex-col border border-white/5 bg-white/[0.01] rounded-xl hover:border-cyan-500/20 transition-all duration-300">
+                <div className="flex items-center gap-2 mb-2 text-cyan-400">
+                  <Hexagon className="h-4 w-4 stroke-[2]" />
+                  <p className="text-[10px] uppercase tracking-widest font-bold truncate">{type}</p>
                 </div>
                 <p className="text-2xl font-bold font-mono text-white/90">{count}</p>
-              </Card>
+              </div>
             ))}
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2">
-            <Card className="glass-panel overflow-hidden animate-in fade-in slide-in-from-bottom-4">
-              <CardHeader className="bg-white/[0.02] border-b border-white/5 pb-4">
-                <CardTitle className="text-lg">Edge Relationships</CardTitle>
-                <CardDescription>Directional links between entities.</CardDescription>
+          <div className="grid gap-8 md:grid-cols-2">
+            {/* Edge relationships card list */}
+            <Card className="glass-panel overflow-hidden">
+              <CardHeader className="bg-white/[0.01] border-b border-white/5 pb-4 px-6 pt-6">
+                <CardTitle className="text-base font-bold text-white tracking-wide">Linked Edge Relationships</CardTitle>
+                <CardDescription className="text-white/40 text-xs">Directional assertions registered on-chain.</CardDescription>
               </CardHeader>
               <CardContent className="p-0">
                 {!graph.edges.length ? (
-                  <div className="p-8 text-center text-white/40 text-sm">
-                    No graph edges yet.
+                  <div className="p-12 text-center text-white/30 text-xs flex flex-col items-center justify-center min-h-[220px] gap-3 border border-white/5 border-dashed rounded-2xl bg-black/20 m-6">
+                    <Network className="h-6 w-6 stroke-[1.5] text-white/20" />
+                    <p className="max-w-[200px] leading-relaxed">No edges or semantic connections resolved in local state graph.</p>
                   </div>
                 ) : (
-                  <div className="divide-y divide-white/5 max-h-[500px] overflow-auto">
+                  <div className="divide-y divide-white/5 max-h-[460px] overflow-auto">
                     {graph.edges.map((edge, index) => (
-                      <div key={`${edge.from}-${edge.to}-${index}`} className="p-4 hover:bg-white/[0.02] transition-colors">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-indigo-500/20 text-indigo-400">
+                      <div key={`${edge.from}-${edge.to}-${index}`} className="p-5 hover:bg-white/[0.01] transition-all duration-300 relative group">
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase bg-cyan-950/20 border border-cyan-800/30 text-cyan-400 font-mono tracking-wider">
                             {edge.type}
                           </span>
                         </div>
-                        <div className="flex flex-col gap-1 text-xs font-mono">
-                          <div className="flex items-center gap-2 text-white/70">
-                            <span className="text-white/40">From:</span>
-                            <span className="truncate">{nodesById.get(edge.from) ?? edge.from}</span>
+                        <div className="flex flex-col gap-2 text-[10px] font-mono text-white/60">
+                          <div className="flex items-center gap-2">
+                            <span className="text-white/30 font-bold uppercase w-10">From:</span>
+                            <span className="truncate select-all text-white/80">{nodesById.get(edge.from) ?? edge.from}</span>
                           </div>
-                          <div className="flex items-center gap-2 text-white/70">
-                            <span className="text-white/40">To:</span>
-                            <span className="truncate text-indigo-300">{nodesById.get(edge.to) ?? edge.to}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-white/30 font-bold uppercase w-10">To:</span>
+                            <span className="truncate select-all text-cyan-300/80">{nodesById.get(edge.to) ?? edge.to}</span>
                           </div>
                         </div>
                       </div>
@@ -126,12 +139,14 @@ export function TrustGraphPanel() {
               </CardContent>
             </Card>
 
-            <Card className="glass-panel overflow-hidden animate-in fade-in slide-in-from-bottom-4">
-              <CardHeader className="bg-white/[0.02] border-b border-white/5 pb-4">
-                <CardTitle className="text-lg">Raw Graph Representation</CardTitle>
+            {/* Raw representations */}
+            <Card className="glass-panel overflow-hidden">
+              <CardHeader className="bg-white/[0.01] border-b border-white/5 pb-4 px-6 pt-6">
+                <CardTitle className="text-base font-bold text-white tracking-wide">Graph Telemetry Block</CardTitle>
+                <CardDescription className="text-white/40 text-xs">Direct structural JSON payload representation.</CardDescription>
               </CardHeader>
               <CardContent className="p-0">
-                <div className="p-4 bg-black/40 h-full max-h-[500px] overflow-auto border-t border-white/5">
+                <div className="p-4 bg-black/40 h-full max-h-[460px] overflow-auto border-t border-white/5">
                   <JsonBlock value={graph} />
                 </div>
               </CardContent>
